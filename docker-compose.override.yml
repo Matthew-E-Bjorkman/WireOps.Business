@@ -1,0 +1,12 @@
+services:
+  company.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8100
+      - ASPNETCORE_HTTPS_PORTS=8101
+    ports:
+      - "8100"
+      - "8101"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro

@@ -1,0 +1,10 @@
+﻿[*.cs]
+
+# CS9113: Parameter is unread.
+dotnet_diagnostic.CS9113.severity = error
+
+# CS8765: Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+dotnet_diagnostic.CS8765.severity = none
+
+# IDE0022: Use block body for method
+dotnet_diagnostic.IDE0022.severity = none
