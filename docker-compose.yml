@@ -11,7 +11,7 @@ services:
       - db
     environment:
       # Connection string for the application
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5433;Database=Company;Username=postgres;Password=postgres"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=Company;Username=postgres;Password=postgres"
 
   db:
     image: postgres:13
@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: Company
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/company/data
 
