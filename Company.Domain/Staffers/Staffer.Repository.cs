@@ -6,7 +6,7 @@ public partial class Staffer
     {
         Task<IReadOnlyList<Staffer>> GetAll();
         Task<Staffer> GetBy(StafferId id);
-        Task Save(Staffer order);
-        Task Delete(Staffer order);
+        Task Save(Staffer staffer);
+        Task Delete(Staffer staffer);
     }
 }

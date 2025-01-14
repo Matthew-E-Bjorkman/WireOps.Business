@@ -137,6 +137,7 @@ void ConfigureHandlers()
     builder.Services.AddScoped<CommandHandler<CreateStaffer, StafferModel>, CreateStafferHandler>();
     builder.Services.AddScoped<CommandHandler<UpdateStaffer, StafferModel?>, UpdateStafferHandler>();
     builder.Services.AddScoped<CommandHandler<DeleteStaffer, bool>, DeleteStafferHandler>();
+    builder.Services.AddScoped<CommandHandler<LinkUser, StafferModel?>, LinkUserHandler>();
 }
 
 void ConfigureDecorators()

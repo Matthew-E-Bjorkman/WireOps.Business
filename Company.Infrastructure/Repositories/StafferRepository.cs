@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Company.Shared.Types;
+using Microsoft.EntityFrameworkCore;
 using WireOps.Company.Common.Errors;
 using WireOps.Company.Domain.Staffers;
 using WireOps.Company.Infrastructure.Database.SQL.EntityFramework;
@@ -12,14 +13,14 @@ public class StafferRepository
     {
         private readonly Dictionary<StafferId, DbStaffer> _staffers = new();
 
-        protected override Staffer.Data CreateData(StafferId id, string name, string sku, string? description)
+        protected override Staffer.Data CreateData(StafferId id, Email email, string givenName, string familyName)
         {
             var dbStaffer = new DbStaffer
             {
                 Id = id,
-                Name = name,
-                SKU = sku,
-                Description = description,
+                Email = email,
+                GivenName = givenName,
+                FamilyName = familyName,
             };
             _staffers.Add(id, dbStaffer);
             dbContext.Staffers.Add(dbStaffer);
@@ -33,7 +34,7 @@ public class StafferRepository
             var dbStaffer = await dbContext.Staffers
                 .SingleOrDefaultAsync(o => o.Id.Equals(id));
             if (dbStaffer is null)
-                throw new DomainError();
+                throw new DomainError(Error.AggregateNotFound);
             var staffer = Staffer.RestoreFrom(dbStaffer);
             _staffers.Add(id, dbStaffer);
             return staffer;

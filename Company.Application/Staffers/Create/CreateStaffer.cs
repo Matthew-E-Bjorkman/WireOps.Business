@@ -2,9 +2,10 @@
 
 namespace WireOps.Company.Application.Staffers.Create;
 
-public readonly struct CreateStaffer (string name, string sku, string? description) : Command
+public readonly struct CreateStaffer(string email, string givenName, string familyName, string? userId) : Command
 {
-    public string Name { get; } = name;
-    public string SKU { get; } = sku;
-    public string? Description { get; } = description;
+    public string Email { get; } = email;
+    public string GivenName { get; } = givenName;
+    public string FamilyName { get; } = familyName;
+    public string? UserId { get; } = userId;
 }

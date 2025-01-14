@@ -2,14 +2,14 @@
 using WireOps.Company.Domain.Staffers;
 using WireOps.Company.Domain.Staffers.Events;
 
-namespace WireOps.Company.Application.Staffers.Update;
+namespace WireOps.Company.Application.Staffers.Create;
 
-public class UpdateStafferHandler (
+public class LinkUserHandler (
     Staffer.Repository repository, 
     StafferEventsOutbox eventsOutbox
-) : CommandHandler<UpdateStaffer, StafferModel?>
+) : CommandHandler<LinkUser, StafferModel?>
 {
-    public async Task<StafferModel?> Handle(UpdateStaffer command)
+    public async Task<StafferModel?> Handle(LinkUser command)
     {
         var staffer = await repository.GetBy(StafferId.From(command.Id));
 
@@ -18,15 +18,15 @@ public class UpdateStafferHandler (
             return null;
         }
 
-        staffer.ChangeInformation(command.Email, command.GivenName, command.FamilyName);
+        staffer.LinkUser(command.UserId);
 
         await repository.Save(staffer);
 
-        eventsOutbox.Add(UpdateEventFrom(staffer.Id));
+        eventsOutbox.Add(StafferLinkedToUserEventFrom(staffer.Id, command.UserId));
 
         return StafferModel.MapFromAggregate(staffer);
     }
 
-    private static StafferUpdated UpdateEventFrom(StafferId stafferId) =>
-        new(stafferId.Value); 
+    private static StafferLinkedToUser StafferLinkedToUserEventFrom(StafferId stafferId, string userId) =>
+        new(stafferId.Value, userId);
 }

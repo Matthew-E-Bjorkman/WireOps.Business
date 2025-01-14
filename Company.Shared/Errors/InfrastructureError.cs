@@ -2,9 +2,9 @@ namespace WireOps.Company.Common.Errors;
 
 public class InfrastructureError : Exception
 {
-    protected InfrastructureError() { }
-        
-    protected InfrastructureError(string message) : base(message) { }
-        
-    protected InfrastructureError(string message, Exception innerException) : base(message, innerException) { }
+    public InfrastructureError() { }
+
+    public InfrastructureError(string message) : base(message) { }
+
+    public InfrastructureError(string message, Exception innerException) : base(message, innerException) { }
 }

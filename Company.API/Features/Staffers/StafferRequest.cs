@@ -1,3 +1,3 @@
 ﻿namespace WireOps.Company.API.Features.Staffers;
 
-public record StafferRequest(string Name, string SKU, string? Description);
+public record StafferRequest(string Email, string GivenName, string FamilyName, string? UserId);

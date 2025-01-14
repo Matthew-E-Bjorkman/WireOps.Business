@@ -12,7 +12,12 @@ public class CreateStafferHandler (
 {
     public async Task<StafferModel> Handle(CreateStaffer command)
     {
-        var staffer = factory.New(command.Name, command.SKU, command.Description);
+        var staffer = factory.New(command.Email, command.GivenName, command.FamilyName);
+
+        if (command.UserId != null)
+        {
+            staffer.LinkUser(command.UserId);
+        }
 
         await repository.Save(staffer);
 

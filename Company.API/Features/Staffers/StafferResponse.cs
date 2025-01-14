@@ -2,7 +2,7 @@
 
 namespace WireOps.Company.API.Features.Staffers;
 
-public record StafferResponse(Guid Id, string Name, string SKU, string? Description)
+public record StafferResponse(Guid Id, string Email, string GivenName, string FamilyName, string? UserId)
 {
-    public static StafferResponse FromModel(StafferModel model) => new(model.Id, model.Name, model.SKU, model.Description);
+    public static StafferResponse FromModel(StafferModel model) => new(model.Id, model.Email, model.GivenName, model.FamilyName, model.UserId);
 }

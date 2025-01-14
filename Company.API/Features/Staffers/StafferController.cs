@@ -18,7 +18,8 @@ public class StafferController(
     QueryHandler<GetStafferList, IReadOnlyList<StafferModel>> GetStafferListHandler,
     CommandHandler<CreateStaffer, StafferModel> CreateStafferHandler,
     CommandHandler<UpdateStaffer, StafferModel?> UpdateStafferHandler,
-    CommandHandler<DeleteStaffer, bool> DeleteStafferHandler
+    CommandHandler<DeleteStaffer, bool> DeleteStafferHandler,
+    CommandHandler<LinkUser, StafferModel?> LinkUserHandler
 ) : ControllerBase
 {
     [HttpPost("/staffer", Name = "CreateStaffer")]
@@ -27,7 +28,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Create(StafferRequest request)
     {
-        var command = new CreateStaffer(request.Name, request.SKU, request.Description);
+        var command = new CreateStaffer(request.Email, request.GivenName, request.FamilyName, request.UserId);
 
         try
         {
@@ -78,7 +79,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Update(Guid id, StafferRequest request)
     {
-        var command = new UpdateStaffer(id, request.Name, request.SKU, request.Description);
+        var command = new UpdateStaffer(id, request.Email, request.GivenName, request.FamilyName);
         try
         {
             var stafferModel = await UpdateStafferHandler.Handle(command);
@@ -106,5 +107,30 @@ public class StafferController(
         return await DeleteStafferHandler.Handle(command) ?
             Ok() :
             NotFound();
+    }
+
+    [HttpPost("/staffer/{id}/user-link", Name = "CreateStafferUserLink")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Authorize("write:staffers")]
+    public async Task<ActionResult> LinkUser(Guid id, string userId)
+    {
+        var command = new LinkUser(id,userId);
+        try
+        {
+            var stafferModel = await LinkUserHandler.Handle(command);
+
+            if (stafferModel == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(StafferResponse.FromModel(stafferModel));
+        }
+        catch (DomainError)
+        {
+            return BadRequest();
+        }
     }
 }

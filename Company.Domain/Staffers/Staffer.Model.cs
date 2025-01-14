@@ -1,22 +1,25 @@
-﻿namespace WireOps.Company.Domain.Staffers;
+﻿using Company.Shared.Types;
+
+namespace WireOps.Company.Domain.Staffers;
 
 public partial class Staffer
 {
     public readonly Data _data;
     private Staffer(Data data) => _data = data;
     public static Staffer RestoreFrom(Data data) => new(data);
-
-    public void Update(string name, string sku, string? description) => _data.Update(name, sku, description);
-
     public interface Data : IEquatable<Data>
     {
         public StafferId Id { get; }
-        public string Name { get; }
-        public string SKU { get; }
-        public string Description { get; }
+        public Email Email { get; }
+        public string? UserId { get; }
+        public string GivenName { get; }
+        public string FamilyName { get; }
         bool IEquatable<Data>.Equals(Data? other) =>
             other is not null &&
             Id.Equals(other.Id);
-        void Update(string name, string sku, string? description);
+        void SetUserId(string userId);
+        void SetEmail(Email email);
+        void SetFamilyName(string givenName);
+        void SetGivenName(string givenName);
     }
 }

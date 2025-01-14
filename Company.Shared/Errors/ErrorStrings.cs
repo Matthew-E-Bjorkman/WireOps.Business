@@ -10,4 +10,7 @@ public static class Error
 
     public const string DeleteOfUnknownAggregate =
         $"Attempt to delete aggregate that wasn't created nor gotten with repository";
+
+    public const string AggregateNotFound =
+        "Aggregate not found";
 }
