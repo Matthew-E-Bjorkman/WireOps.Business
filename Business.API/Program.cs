@@ -1,0 +1,290 @@
+using Confluent.Kafka;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using NodaTime;
+using Quartz;
+using System.Security.Claims;
+using WireOps.Business.Application.Auth;
+using WireOps.Business.Application.Common;
+using WireOps.Business.Application.Companies;
+using WireOps.Business.Application.Companies.Create;
+using WireOps.Business.Application.Companies.Get;
+using WireOps.Business.Application.Companies.Update;
+using WireOps.Business.Application.Staffers;
+using WireOps.Business.Application.Staffers.Create;
+using WireOps.Business.Application.Staffers.Delete;
+using WireOps.Business.Application.Staffers.Get;
+using WireOps.Business.Application.Staffers.GetList;
+using WireOps.Business.Application.Staffers.Update;
+using WireOps.Business.Domain.Common.Definitions;
+using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Companies.Events;
+using WireOps.Business.Domain.Staffers;
+using WireOps.Business.Domain.Staffers.Events;
+using WireOps.Business.Infrastructure.Communication.Outbox.Common;
+using WireOps.Business.Infrastructure.Communication.Outbox.Kafka;
+using WireOps.Business.Infrastructure.Communication.Outbox.Kafka.Implementation;
+using WireOps.Business.Infrastructure.Communication.Outbox.Postgres;
+using WireOps.Business.Infrastructure.Communication.Outbox.Quartz;
+using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
+using WireOps.Business.Infrastructure.Repositories;
+
+var builder = WebApplication.CreateBuilder(args);
+ConfigureLoggers();
+ConfigureApiServices();
+ConfigureSwaggerDocumentation();
+ConfigurePersistence();
+ConfigureCommunication();
+ConfigureRepositories();
+ConfigureFactories();
+ConfigureHandlers();
+ConfigureDecorators();
+ConfigureJobScheduling();
+ConfigureAuth0();
+
+var app = builder.Build();
+
+RegisterConfiguration();
+RegisterCorsForLocalDevelopment();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(x => {
+        x.EnableTryItOutByDefault();
+    });
+}
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+await RegisterJobs();
+
+app.Run();
+
+void ConfigureLoggers()
+{
+    builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddConsole());
+}
+
+void ConfigureApiServices()
+{
+    builder.Services.AddControllers();
+
+    builder.Services.AddSingleton<IClock>(SystemClock.Instance);
+}
+
+void ConfigureSwaggerDocumentation()
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(config =>
+    {
+        config.SwaggerDoc("v1", new OpenApiInfo() { Title = "WireOps.Business.API", Version = "v1" });
+        var securitySchema = new OpenApiSecurityScheme
+        {
+            Description = "JWT Auth Bearer Scheme",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+            }
+        };
+
+        config.AddSecurityDefinition("Bearer", securitySchema);
+        var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Bearer" } } };
+        config.AddSecurityRequirement(securityRequirement);
+    });
+}
+
+void ConfigurePersistence()
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Services.AddDbContextPool<BusinessDbContext>(options => options
+            .UseNpgsql(connectionString, npgsqlOptions => {
+                npgsqlOptions.MigrationsHistoryTable("EntityFrameworkMigrationHistory");
+                npgsqlOptions.UseNodaTime();
+            }));
+
+    //Company
+    builder.Services.AddScoped<CompanyRepository.EntityFramework>();
+
+    //Staffer
+    builder.Services.AddScoped<StafferRepository.EntityFramework>();
+}
+
+void ConfigureCommunication()
+{
+    builder.Services.AddSingleton<MessageTypes>();
+    builder.Services.AddScoped<TransactionalOutboxes>();
+    builder.Services.AddScoped<TransactionalOutboxRepository, PostgresOutboxRepository>();
+    builder.Services.AddScoped<PostgresOutboxRepository>();
+    builder.Services.AddScoped<PostgresOutboxProcessorSettings>();
+    builder.Services.AddScoped<ProducerConfig>();
+    builder.Services.AddScoped<KafkaMessageProducer>();
+    builder.Services.AddScoped<OutboxMessageProcessor, KafkaOutboxMessageProcessor>();
+
+    //Company
+    builder.Services.AddScoped<CompanyEventsOutbox, KafkaCompanyEventsOutbox>();
+
+    //Staffer
+    builder.Services.AddScoped<StafferEventsOutbox, KafkaStafferEventsOutbox>();
+}
+
+void ConfigureRepositories()
+{
+    //Company
+    builder.Services.AddScoped<Company.Repository>(s => s.GetService<CompanyRepository.EntityFramework>()!);
+
+    //Staffer
+    builder.Services.AddScoped<Staffer.Repository>(s => s.GetService<StafferRepository.EntityFramework>()!);
+}
+
+void ConfigureFactories()
+{
+    //Company
+    builder.Services.AddScoped<Company.Factory>(s => s.GetService<CompanyRepository.EntityFramework>()!);
+
+    //Staffer
+    builder.Services.AddScoped<Staffer.Factory>(s => s.GetService<StafferRepository.EntityFramework>()!);
+}
+
+void ConfigureHandlers()
+{
+    //Company
+    builder.Services.AddScoped<QueryHandler<GetCompany, CompanyModel?>, GetCompanyHandler>();
+
+    builder.Services.AddScoped<CommandHandler<CreateCompany, CompanyModel>, CreateCompanyHandler>();
+    builder.Services.AddScoped<CommandHandler<UpdateCompany, CompanyModel?>, UpdateCompanyHandler>();
+
+    //Staffer
+    builder.Services.AddScoped<QueryHandler<GetStaffer, StafferModel?>, GetStafferHandler>();
+    builder.Services.AddScoped<QueryHandler<GetStafferList, IReadOnlyList<StafferModel>>, GetStafferListHandler>();
+
+    builder.Services.AddScoped<CommandHandler<CreateStaffer, StafferModel>, CreateStafferHandler>();
+    builder.Services.AddScoped<CommandHandler<UpdateStaffer, StafferModel?>, UpdateStafferHandler>();
+    builder.Services.AddScoped<CommandHandler<DeleteStaffer, bool>, DeleteStafferHandler>();
+    builder.Services.AddScoped<CommandHandler<LinkUser, StafferModel?>, LinkUserHandler>();
+}
+
+void ConfigureDecorators()
+{
+    builder.Services.TryDecorate(typeof(CommandHandler<>), typeof(AmbientTransactionDecorator<>));
+    builder.Services.TryDecorate(typeof(CommandHandler<,>), typeof(AmbientTransactionDecorator<,>));
+}
+
+void ConfigureJobScheduling()
+{
+    builder.Services.AddScoped<PostgresOutboxProcessor>();
+
+    builder.Services.AddQuartz();
+    builder.Services.AddQuartzHostedService(opt =>
+    {
+        opt.WaitForJobsToComplete = true;
+    });
+}
+
+void ConfigureAuth0()
+{
+    var domain = builder.Configuration["Auth0:Domain"]!;
+
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.Authority = $"https://{domain}/";
+        options.Audience = builder.Configuration["Auth0:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = ClaimTypes.NameIdentifier
+        };
+    });
+
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy(
+            "read:companies",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("read:companies", $"https://{domain}/")
+            )
+        );
+        options.AddPolicy(
+            "write:companies",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("write:companies", $"https://{domain}/")
+            )
+        );
+        options.AddPolicy(
+            "read:staffers",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("read:staffers", $"https://{domain}/")
+            )
+        );
+        options.AddPolicy(
+            "write:staffers",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("write:staffers", $"https://{domain}/")
+            )
+        );
+        options.AddPolicy(
+            "admin",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("admin", $"https://{domain}/")
+            )
+        );
+    });
+
+    builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+}
+
+void RegisterConfiguration()
+{
+    app.Services.GetRequiredService<MessageTypes>().Register<CompanyEvent>("CompanyId", new List<string>()); //TODO: This is probably very wrong  
+    app.Services.GetRequiredService<MessageTypes>().Register<StafferEvent>("StafferId", new List<string>()); //TODO: This is probably very wrong  
+
+}
+
+async Task RegisterJobs()
+{
+    var schedulerFactory = app.Services.GetRequiredService<ISchedulerFactory>();
+    var scheduler = await schedulerFactory.GetScheduler();
+
+    // define the job and tie it to our HelloJob class
+    var job = JobBuilder.Create<OutboxJob<PostgresOutboxProcessor>>()
+        .WithIdentity("OutboxJob")
+        .Build();
+
+    // Trigger the job to run now, and then every 40 seconds
+    var trigger = TriggerBuilder.Create()
+        .WithIdentity("OutboxJobTrigger")
+        .StartNow()
+        .WithSimpleSchedule(x => x
+            .WithIntervalInSeconds(5)
+            .RepeatForever())
+        .Build();
+
+    await scheduler.ScheduleJob(job, trigger);
+}
+
+void RegisterCorsForLocalDevelopment()
+{
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseCors(builder =>
+            builder.WithOrigins("http://localhost:3000") // WireOps.Business.UI
+                   .AllowAnyHeader()
+                   .AllowAnyMethod()
+        );
+    }
+}

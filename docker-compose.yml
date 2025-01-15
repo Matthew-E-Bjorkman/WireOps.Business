@@ -1,9 +1,9 @@
 services:
   api:
-    image: ${DOCKER_REGISTRY-}wireopscompany
+    image: ${DOCKER_REGISTRY-}wireopsbusiness
     build:
       context: .
-      dockerfile: Company.API/Dockerfile
+      dockerfile: Business.API/Dockerfile
     ports:
       - "8100:8100"
       - "8101:8101"
@@ -11,15 +11,15 @@ services:
       - db
     environment:
       # Connection string for the application
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=Company;Username=postgres;Password=postgres"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=Business;Username=postgres;Password=postgres"
 
   db:
     image: postgres:13
-    container_name: postgres-company
+    container_name: postgres-business
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: Company
+      POSTGRES_DB: Business
     ports:
       - "5433:5432"
     volumes:

@@ -1,0 +1,19 @@
+﻿namespace WireOps.Business.Common.Errors;
+
+public static class Error
+{
+    public const string SameAggregateRestoredMoreThanOnce =
+        "Same aggregate is restored from the repository more than once in a single business transaction";
+
+    public const string SaveOfUnknownAggregate =
+        $"Attempt to save aggregate that wasn't created nor gotten with repository";
+
+    public const string DeleteOfUnknownAggregate =
+        $"Attempt to delete aggregate that wasn't created nor gotten with repository";
+
+    public const string AggregateNotFound =
+        "Aggregate not found";
+
+    public const string CompanyHasMultipleOwners =
+        "Operation would result in company having multiple owning staffers";
+}
