@@ -22,7 +22,7 @@ public class CompanyController(
     [HttpPost("/company", Name = "CreateCompany")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [Authorize("write:companies")]
+    [Authorize]
     public async Task<ActionResult> Create(CompanyCreateRequest request)
     {
         var command = new CreateCompany(request.Name, request.UserId, request.OwnerEmail, request.OwnerGivenName, request.OwnerFamilyName);

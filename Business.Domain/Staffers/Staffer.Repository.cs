@@ -8,6 +8,7 @@ public partial class Staffer
     {
         Task<IReadOnlyList<Staffer>> GetAll();
         Task<Staffer> GetBy(StafferId id);
+        Task<Staffer> GetByUserId(string userId);
         Task ValidateCanSave(Staffer staffer);
         Task Save();
         Task Delete(Staffer staffer);

@@ -44,6 +44,18 @@ public class StafferRepository
             return staffer;
         }
 
+        public async Task<Staffer> GetByUserId(string userId)
+        {
+            if (_staffers.Values.Any(o => o.UserId == userId))
+                throw new DesignError(Error.SameAggregateRestoredMoreThanOnce);
+            var dbStaffer = await dbContext.Staffers
+                .SingleOrDefaultAsync(o => o.UserId == userId);
+            if (dbStaffer is null)
+                throw new DomainError(Error.AggregateNotFound);
+            _staffers.Add(dbStaffer.Id, dbStaffer);
+            return Staffer.RestoreFrom(dbStaffer);
+        }
+
         public async Task<IReadOnlyList<Staffer>> GetAll()
         {
             var dbStaffers = await dbContext.Staffers.ToListAsync();

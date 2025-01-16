@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -215,37 +216,44 @@ void ConfigureAuth0()
     {
         options.AddPolicy(
             "read:companies",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("read:companies", $"https://{domain}/")
-            )
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("read:companies", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
         );
         options.AddPolicy(
             "write:companies",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("write:companies", $"https://{domain}/")
-            )
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("write:companies", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
         );
         options.AddPolicy(
             "read:staffers",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("read:staffers", $"https://{domain}/")
-            )
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("read:staffers", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
         );
         options.AddPolicy(
             "write:staffers",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("write:staffers", $"https://{domain}/")
-            )
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("write:staffers", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
         );
         options.AddPolicy(
             "admin",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("admin", $"https://{domain}/")
-            )
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("admin", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
         );
     });
 
+    builder.Services.AddSingleton<IActionContextAccessor,  ActionContextAccessor>();
     builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+    builder.Services.AddScoped<IAuthorizationHandler, BelongsToCompanyHandler>();
 }
 
 void RegisterConfiguration()
@@ -282,7 +290,7 @@ void RegisterCorsForLocalDevelopment()
     if (app.Environment.IsDevelopment())
     {
         app.UseCors(builder =>
-            builder.WithOrigins("http://localhost:3000") // WireOps.Business.UI
+            builder.WithOrigins("https://local.ui:3000") // WireOps.UI
                    .AllowAnyHeader()
                    .AllowAnyMethod()
         );
