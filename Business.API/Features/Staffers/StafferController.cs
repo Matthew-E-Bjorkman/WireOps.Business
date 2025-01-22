@@ -8,7 +8,6 @@ using WireOps.Business.Application.Staffers.Get;
 using WireOps.Business.Application.Staffers.GetList;
 using WireOps.Business.Application.Staffers.Update;
 using WireOps.Business.Common.Errors;
-using WireOps.Business.Domain.Staffers;
 
 namespace WireOps.Business.API.Features.Staffers;
 
@@ -20,7 +19,8 @@ public class StafferController(
     CommandHandler<CreateStaffer, StafferModel> CreateStafferHandler,
     CommandHandler<UpdateStaffer, StafferModel?> UpdateStafferHandler,
     CommandHandler<DeleteStaffer, bool> DeleteStafferHandler,
-    CommandHandler<LinkUser, StafferModel?> LinkUserHandler
+    CommandHandler<LinkUserToStaffer, StafferModel?> LinkUserHandler,
+    CommandHandler<InviteStaffer, StafferModel?> InviteStafferHandler
 ) : ControllerBase
 {
     [HttpPost("/company/{companyId}/staffer", Name = "CreateStaffer")]
@@ -117,10 +117,35 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> LinkUser(Guid id, string userId)
     {
-        var command = new LinkUser(id,userId);
+        var command = new LinkUserToStaffer(id,userId);
         try
         {
             var stafferModel = await LinkUserHandler.Handle(command);
+
+            if (stafferModel == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(StafferRecord.FromModel(stafferModel));
+        }
+        catch (DomainError)
+        {
+            return BadRequest();
+        }
+    }
+
+    [HttpPost("/company/{companyId}/staffer/{id}/invite", Name = "CreateStafferInvite")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Authorize("write:staffers")]
+    public async Task<ActionResult> Invite(Guid id)
+    {
+        var command = new InviteStaffer(id);
+        try
+        {
+            var stafferModel = await InviteStafferHandler.Handle(command);
 
             if (stafferModel == null)
             {

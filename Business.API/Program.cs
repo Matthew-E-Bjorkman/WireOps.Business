@@ -1,3 +1,5 @@
+using Business.Application.Auth;
+using Business.Application.Email;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -45,6 +47,7 @@ ConfigureHandlers();
 ConfigureDecorators();
 ConfigureJobScheduling();
 ConfigureAuth0();
+ConfigureEmail();
 
 var app = builder.Build();
 
@@ -78,6 +81,8 @@ void ConfigureApiServices()
     builder.Services.AddControllers();
 
     builder.Services.AddSingleton<IClock>(SystemClock.Instance);
+
+    builder.Services.AddHttpClient();
 }
 
 void ConfigureSwaggerDocumentation()
@@ -173,7 +178,8 @@ void ConfigureHandlers()
     builder.Services.AddScoped<CommandHandler<CreateStaffer, StafferModel>, CreateStafferHandler>();
     builder.Services.AddScoped<CommandHandler<UpdateStaffer, StafferModel?>, UpdateStafferHandler>();
     builder.Services.AddScoped<CommandHandler<DeleteStaffer, bool>, DeleteStafferHandler>();
-    builder.Services.AddScoped<CommandHandler<LinkUser, StafferModel?>, LinkUserHandler>();
+    builder.Services.AddScoped<CommandHandler<LinkUserToStaffer, StafferModel?>, LinkUserToStafferHandler>();
+    builder.Services.AddScoped<CommandHandler<InviteStaffer, StafferModel?>, InviteStafferHandler>();
 }
 
 void ConfigureDecorators()
@@ -254,6 +260,13 @@ void ConfigureAuth0()
     builder.Services.AddSingleton<IActionContextAccessor,  ActionContextAccessor>();
     builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
     builder.Services.AddScoped<IAuthorizationHandler, BelongsToCompanyHandler>();
+
+    builder.Services.AddScoped<Auth0APIClient>();
+}
+
+void ConfigureEmail()
+{
+    builder.Services.AddSingleton<IEmailClient, MailgunEmailClient>();
 }
 
 void RegisterConfiguration()
@@ -289,10 +302,10 @@ void RegisterCorsForLocalDevelopment()
 {
     if (app.Environment.IsDevelopment())
     {
-        app.UseCors(builder =>
+        app.UseCors(builder => {
             builder.WithOrigins("https://local.ui:3000") // WireOps.UI
                    .AllowAnyHeader()
-                   .AllowAnyMethod()
-        );
+                   .AllowAnyMethod();
+        });
     }
 }

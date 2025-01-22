@@ -4,12 +4,12 @@ using WireOps.Business.Domain.Staffers.Events;
 
 namespace WireOps.Business.Application.Staffers.Create;
 
-public class LinkUserHandler (
+public class LinkUserToStafferHandler (
     Staffer.Repository repository, 
     StafferEventsOutbox eventsOutbox
-) : CommandHandler<LinkUser, StafferModel?>
+) : CommandHandler<LinkUserToStaffer, StafferModel?>
 {
-    public async Task<StafferModel?> Handle(LinkUser command)
+    public async Task<StafferModel?> Handle(LinkUserToStaffer command)
     {
         var staffer = await repository.GetBy(StafferId.From(command.Id));
 
