@@ -2,7 +2,7 @@
 
 namespace WireOps.Business.Application.Staffers.GetList;
 
-public readonly struct GetStafferList (Guid id) : Query
+public readonly struct GetStafferList (Guid companyId) : Query
 {
-    public Guid Id { get; } = id;
+    public Guid CompanyId { get; } = companyId;
 }

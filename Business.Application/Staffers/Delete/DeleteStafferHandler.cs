@@ -1,4 +1,5 @@
 ﻿using WireOps.Business.Application.Common;
+using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Staffers;
 using WireOps.Business.Domain.Staffers.Events;
 
@@ -11,7 +12,7 @@ public class DeleteStafferHandler (
 {
     public async Task<bool> Handle(DeleteStaffer command)
     {
-        var staffer = await repository.GetBy(StafferId.From(command.Id));
+        var staffer = await repository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
 
         if (staffer == null)
         {

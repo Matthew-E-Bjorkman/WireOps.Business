@@ -74,6 +74,9 @@ public class Auth0APIClient
             Connection = "Username-Password-Authentication",
             Email = email,
             EmailVerified = false,
+            NickName = companyName,
+            FirstName = givenName,
+            LastName = familyName,
             AppMetadata =
             new {
                 company_id = tenantId,
@@ -84,10 +87,41 @@ public class Auth0APIClient
             Password = Guid.NewGuid().ToString()
         };
 
-        //TODO: Not finding the connection for some reason
         var user = await _managementApiClient!.Users.CreateAsync(request);
 
         return user.UserId;
+    }
+
+    public async Task<User> UpdateUser(string userId, string companyName, Guid companyId)
+    {
+        await CheckAndGenerateManagementApiClient();
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new DesignError("Cannot update user without a proper userId");
+        }
+
+        var user = await _managementApiClient!.Users.GetAsync(userId);
+
+        if (user == null)
+        {
+            throw new DomainError("Cannot find referenced user");
+        }
+
+        var request = new UserUpdateRequest
+        {
+            AppMetadata = new
+            {
+                company_id = companyId,
+                company_name = companyName,
+                given_name = user.AppMetadata.given_name,
+                family_name = user.AppMetadata.family_name
+            }
+        };
+
+        user = await _managementApiClient!.Users.UpdateAsync(userId, request);
+
+        return user;
     }
 
     public async Task SendInviteEmail(string userId)

@@ -1,6 +1,5 @@
 using Business.API.Common.Records;
 using WireOps.Business.Application.Companies;
-using WireOps.Business.Application.Staffers;
 
 namespace WireOps.Business.API.Features.Companies
 {

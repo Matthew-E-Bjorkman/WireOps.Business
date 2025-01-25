@@ -47,30 +47,30 @@ public class StafferController(
     [ProducesResponseType<StafferModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize("read:staffers")]
-    public async Task<ActionResult> Get(Guid id)
+    public async Task<ActionResult> Get(Guid companyId, Guid id)
     {
-        var query = new GetStaffer(id);
+        var query = new GetStaffer(companyId, id);
 
         var staffer = await GetStafferHandler.Handle(query);
 
         return staffer == null ?
             NotFound() : 
-            Ok(staffer);
+            Ok(StafferRecord.FromModel(staffer));
     }
 
     [HttpGet("/company/{companyId}/staffer", Name = "GetStafferList")]
     [ProducesResponseType<StafferModel>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize("read:staffers")]
-    public async Task<ActionResult> Get()
+    public async Task<ActionResult> Get(Guid companyId)
     {
-        var query = new GetStafferList();
+        var query = new GetStafferList(companyId);
 
         var staffers = await GetStafferListHandler.Handle(query);
 
         return staffers == null ?
             NotFound() :
-            Ok(staffers);
+            Ok(staffers.Select(StafferRecord.FromModel));
     }
 
     [HttpPut("/company/{companyId}/staffer/{id}", Name = "UpdateStaffer")]
@@ -78,9 +78,9 @@ public class StafferController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize("write:staffers")]
-    public async Task<ActionResult> Update(Guid id, StafferRequest request)
+    public async Task<ActionResult> Update(Guid companyId, Guid id, StafferRequest request)
     {
-        var command = new UpdateStaffer(id, request.Email, request.GivenName, request.FamilyName);
+        var command = new UpdateStaffer(companyId, id, request.Email, request.GivenName, request.FamilyName);
         try
         {
             var stafferModel = await UpdateStafferHandler.Handle(command);
@@ -102,9 +102,9 @@ public class StafferController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize("write:staffers")]
-    public async Task<ActionResult> Delete(Guid id)
+    public async Task<ActionResult> Delete(Guid companyId, Guid id)
     {
-        var command = new DeleteStaffer(id);
+        var command = new DeleteStaffer(companyId, id);
         return await DeleteStafferHandler.Handle(command) ?
             Ok() :
             NotFound();
@@ -115,9 +115,9 @@ public class StafferController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize("write:staffers")]
-    public async Task<ActionResult> LinkUser(Guid id, string userId)
+    public async Task<ActionResult> LinkUser(Guid companyId, Guid id, string userId)
     {
-        var command = new LinkUserToStaffer(id,userId);
+        var command = new LinkUserToStaffer(companyId, id, userId);
         try
         {
             var stafferModel = await LinkUserHandler.Handle(command);
@@ -140,9 +140,9 @@ public class StafferController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize("write:staffers")]
-    public async Task<ActionResult> Invite(Guid id)
+    public async Task<ActionResult> Invite(Guid companyId, Guid id)
     {
-        var command = new InviteStaffer(id);
+        var command = new InviteStaffer(companyId, id);
         try
         {
             var stafferModel = await InviteStafferHandler.Handle(command);

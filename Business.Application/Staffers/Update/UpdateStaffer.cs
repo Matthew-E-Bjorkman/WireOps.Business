@@ -2,8 +2,9 @@
 
 namespace WireOps.Business.Application.Staffers.Update;
 
-public readonly struct UpdateStaffer (Guid id, string email, string givenName, string familyName) : Command
+public readonly struct UpdateStaffer (Guid companyId, Guid id, string email, string givenName, string familyName) : Command
 {
+    public Guid CompanyId { get; } = companyId;
     public Guid Id { get; } = id;
     public string Email { get; } = email;
     public string GivenName { get; } = givenName;

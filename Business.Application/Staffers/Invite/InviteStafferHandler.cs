@@ -16,16 +16,17 @@ public class InviteStafferHandler (
 {
     public async Task<StafferModel?> Handle(InviteStaffer command)
     {
-        var staffer = await repository.GetBy(StafferId.From(command.Id));
+        var company = await companyRepository.GetBy(CompanyId.From(command.Id));
 
-        if (staffer == null)
+        if (company == null)
         {
             return null;
         }
 
-        var company = await companyRepository.GetBy(staffer._data.CompanyId);
+        var staffer = await repository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
 
-        if (company == null) {
+        if (staffer == null)
+        {
             return null;
         }
 

@@ -31,11 +31,11 @@ public class StafferRepository
             return dbStaffer;
         }
 
-        public async Task<Staffer> GetBy(StafferId id)
+        public async Task<Staffer> GetBy(CompanyId companyId, StafferId id)
         {
             if (_staffers.ContainsKey(id))
                 throw new DesignError(Error.SameAggregateRestoredMoreThanOnce);
-            var dbStaffer = await dbContext.Staffers
+            var dbStaffer = await dbContext.Staffers.Where(s => s.CompanyId == companyId)
                 .SingleOrDefaultAsync(o => o.Id.Equals(id));
             if (dbStaffer is null)
                 throw new DomainError(Error.AggregateNotFound);
@@ -46,19 +46,16 @@ public class StafferRepository
 
         public async Task<Staffer> GetByUserId(string userId)
         {
-            if (_staffers.Values.Any(o => o.UserId == userId))
-                throw new DesignError(Error.SameAggregateRestoredMoreThanOnce);
             var dbStaffer = await dbContext.Staffers
                 .SingleOrDefaultAsync(o => o.UserId == userId);
             if (dbStaffer is null)
                 throw new DomainError(Error.AggregateNotFound);
-            _staffers.Add(dbStaffer.Id, dbStaffer);
             return Staffer.RestoreFrom(dbStaffer);
         }
 
-        public async Task<IReadOnlyList<Staffer>> GetAll()
+        public async Task<IReadOnlyList<Staffer>> GetAllForCompany(CompanyId companyId)
         {
-            var dbStaffers = await dbContext.Staffers.ToListAsync();
+            var dbStaffers = await dbContext.Staffers.Where(s => s.CompanyId == companyId).ToListAsync();
             return dbStaffers.Select(Staffer.RestoreFrom).ToList();
         }
 
