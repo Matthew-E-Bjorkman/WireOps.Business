@@ -36,6 +36,7 @@ using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 using WireOps.Business.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+ConfigureEnvironmentVariables();
 ConfigureLoggers();
 ConfigureApiServices();
 ConfigureSwaggerDocumentation();
@@ -70,6 +71,11 @@ app.MapControllers();
 await RegisterJobs();
 
 app.Run();
+
+void ConfigureEnvironmentVariables()
+{
+    builder.Configuration.AddEnvironmentVariables();
+}
 
 void ConfigureLoggers()
 {
