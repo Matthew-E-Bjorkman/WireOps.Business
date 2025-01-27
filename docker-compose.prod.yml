@@ -1,33 +1,44 @@
-# docker-compose.prod.yml (AWS Production)
 version: '3.8'
 
 services:
   api:
-    image: ${AWS_ECR_URI}/wireopsbusiness:${TAG:-latest}
+    image: ${AWS_ECR_URI}/wireops-business-api:${TAG:-latest}
     build:
       context: .
       dockerfile: Business.API/Dockerfile
     ports:
-      - "80:8100"  # ALB will route to port 80
+      - "80:80"
     environment:
-      ASPNETCORE_ENVIRONMENT: "Production"
-      ConnectionStrings__DefaultConnection: "Host=${RDS_ENDPOINT};Port=5432;Database=Business;Username=${RDS_MASTER_USERNAME};Password=${RDS_MASTER_PASSWORD}"
+      ASPNETCORE_ENVIRONMENT: Production
+      # Connection String (built from secrets)
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST};Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD};"
+      # Auth0 Configuration (using __ for nesting)
       Auth0__Domain: ${AUTH0_DOMAIN}
       Auth0__Audience: ${AUTH0_AUDIENCE}
-      Auth0__ManagementAPIAudience: ${AUTH0_MGMT_AUDIENCE}
-      Routing__UiUrl: ${PROD_UI_URL}
+      Auth0__ManagementAPIAudience: ${AUTH0_MANAGEMENTAPIAUDIENCE}
+      Auth0__UIUrl: ${AUTH0_UI_URL}
+      # Mailgun Configuration
+      Mailgun__Domain: ${MAILGUN_DOMAIN}
     secrets:
-      - auth0_credentials
-      - mailgun_credentials
+      - db_username  # Maps to DB_USERNAME
+      - db_password  # Maps to DB_PASSWORD
+      - auth0_client_id      # Maps to Auth0:ClientId
+      - auth0_client_secret  # Maps to Auth0:ClientSecret
+      - mailgun_api_key      # Maps to Mailgun:APIKey
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-# No db service - using Amazon RDS
 secrets:
-  auth0_credentials:
-    external: true  # From AWS Secrets Manager
-  mailgun_credentials:
+  db_username:
+    external: true
+  db_password:
+    external: true
+  auth0_client_id:
+    external: true
+  auth0_client_secret:
+    external: true
+  mailgun_api_key:
     external: true

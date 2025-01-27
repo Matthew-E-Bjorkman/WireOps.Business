@@ -11,7 +11,7 @@ namespace Business.Application.Auth;
 
 public class Auth0APIClient
 {
-    private readonly string _UiUrl;
+    private readonly string _UIUrl;
     private readonly string _domain;
     private readonly string _clientId;
     private readonly string _clientSecret;
@@ -25,8 +25,7 @@ public class Auth0APIClient
     {
         _emailClient = emailClient;
 
-        _UiUrl = configuration["Routing:UiUrl"] ?? string.Empty;
-
+        _UIUrl = configuration["uth0A:UIUrl"] ?? string.Empty;
         _domain = configuration["Auth0:Domain"] ?? string.Empty;
         _clientId = configuration["Auth0:ClientId"] ?? string.Empty;
         _clientSecret = configuration["Auth0:ClientSecret"] ?? string.Empty;
@@ -142,15 +141,15 @@ public class Auth0APIClient
 
     internal async Task SendInviteEmail(User user)
     {
-        if (string.IsNullOrEmpty(_UiUrl))
+        if (string.IsNullOrEmpty(_UIUrl))
         {
-            throw new DesignError("UiUrl is not configured");
+            throw new DesignError("UIUrl is not configured");
         }
 
         var ticket = await _managementApiClient!.Tickets.CreatePasswordChangeTicketAsync(new PasswordChangeTicketRequest
         {
             UserId = user.UserId,
-            ResultUrl = _UiUrl,
+            ResultUrl = _UIUrl,
             MarkEmailAsVerified = true
         });
 

@@ -196,6 +196,8 @@ void ConfigureDecorators()
 
 void ConfigureJobScheduling()
 {
+    return; //TODO: Implement, probably as a separate service for AWS (so api services aren't running nonstop)
+
     builder.Services.AddScoped<PostgresOutboxProcessor>();
 
     builder.Services.AddQuartz();
@@ -284,6 +286,8 @@ void RegisterConfiguration()
 
 async Task RegisterJobs()
 {
+    return; //TODO: Implement, probably as a separate service for AWS (so api services aren't running nonstop)
+
     var schedulerFactory = app.Services.GetRequiredService<ISchedulerFactory>();
     var scheduler = await schedulerFactory.GetScheduler();
 
