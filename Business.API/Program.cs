@@ -63,7 +63,8 @@ if (app.Environment.IsDevelopment())
         x.EnableTryItOutByDefault();
     });
 }
-app.UseHttpsRedirection();
+
+//app.UseHttpsRedirection(); //TODO: Prove this doesnt break http in AWS
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -119,7 +120,11 @@ void ConfigureSwaggerDocumentation()
 
 void ConfigurePersistence()
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var dbHost = builder.Configuration["DB:Host"]!;
+    var dbName = builder.Configuration["DB:Name"]!;
+    var dbUsername = builder.Configuration["DB:Username"]!;
+    var dbPassword = builder.Configuration["DB:Password"]!;
+    var connectionString = $"Server={dbHost};Port=5432;Database={dbName};Username={dbUsername};Password={dbPassword};";
     builder.Services.AddDbContextPool<BusinessDbContext>(options => options
             .UseNpgsql(connectionString, npgsqlOptions => {
                 npgsqlOptions.MigrationsHistoryTable("EntityFrameworkMigrationHistory");

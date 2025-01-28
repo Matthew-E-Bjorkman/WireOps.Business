@@ -10,8 +10,11 @@ services:
       - "8100:8100"
       - "8101:8101"
     environment:
+      DB__Host: ${DB_Host}
+      DB__Name: ${DB_Name}
+      DB__Username: ${DB_Username}
+      DB__Password: ${DB_Password}
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST};Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD};"
       Auth0__Domain: ${Auth0_Domain}
       Auth0__Audience: ${Auth0_Audience}
       Auth0__ManagementAPIAudience: ${Auth0_ManagementAPIAudience}

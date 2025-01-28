@@ -10,9 +10,10 @@ services:
       - "80:80"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      # Connection String (built from secrets)
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST};Port=5432;Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD};"
-      # Auth0 Configuration (using __ for nesting)
+      # DB Configuration
+      DB__Host: ${DB_Host}
+      DB__Name: ${DB_Name}
+      # Auth0 Configuration 
       Auth0__Domain: ${AUTH0_DOMAIN}
       Auth0__Audience: ${AUTH0_AUDIENCE}
       Auth0__ManagementAPIAudience: ${AUTH0_MANAGEMENTAPIAUDIENCE}
@@ -20,16 +21,11 @@ services:
       # Mailgun Configuration
       Mailgun__Domain: ${MAILGUN_DOMAIN}
     secrets:
-      - db_username  # Maps to DB_USERNAME
-      - db_password  # Maps to DB_PASSWORD
+      - db_username  # Maps to DB:USERNAME
+      - db_password  # Maps to DB:PASSWORD
       - auth0_client_id      # Maps to Auth0:ClientId
       - auth0_client_secret  # Maps to Auth0:ClientSecret
       - mailgun_api_key      # Maps to Mailgun:APIKey
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 secrets:
   db_username:

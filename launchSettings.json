@@ -13,6 +13,14 @@
       "serviceActions": {
         "api": "StartDebugging"
       }
+    },
+    "Docker Compose Production": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "dockerComposeFile": "docker-compose.prod.yml",
+      "serviceActions": {
+        "api": "StartDebugging"
+      }
     }
   }
 }
