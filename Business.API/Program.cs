@@ -55,16 +55,14 @@ var app = builder.Build();
 RegisterConfiguration();
 RegisterCorsForLocalDevelopment();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(x => {
-        x.EnableTryItOutByDefault();
-    });
-}
+app.UseSwagger();
+app.UseSwaggerUI(x => {
+    x.EnableTryItOutByDefault();
+    x.SwaggerEndpoint("/swagger/v1/swagger.json", "WireOps Business API");
+    x.RoutePrefix = string.Empty;
+});
 
-//app.UseHttpsRedirection(); //TODO: Prove this doesnt break http in AWS
+app.UseHttpsRedirection(); 
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
