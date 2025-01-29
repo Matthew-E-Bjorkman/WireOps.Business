@@ -10,6 +10,7 @@ public class StafferModel
     public string? UserId { get; set; }
     public required string GivenName { get; set; }
     public required string FamilyName { get; set; }
+    public required bool IsOwner { get; set; }
 
     public static StafferModel MapFromAggregate(Staffer aggregate)
     {
@@ -20,7 +21,8 @@ public class StafferModel
             Email = aggregate._data.Email.Value,
             UserId = aggregate._data.UserId,
             GivenName = aggregate._data.GivenName,
-            FamilyName = aggregate._data.FamilyName
+            FamilyName = aggregate._data.FamilyName,
+            IsOwner = aggregate._data.IsOwner
         };
     }
 }

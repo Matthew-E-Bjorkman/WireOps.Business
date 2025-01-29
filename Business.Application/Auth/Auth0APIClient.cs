@@ -25,7 +25,7 @@ public class Auth0APIClient
     {
         _emailClient = emailClient;
 
-        _UIUrl = configuration["uth0A:UIUrl"] ?? string.Empty;
+        _UIUrl = configuration["Auth0:UIUrl"] ?? string.Empty;
         _domain = configuration["Auth0:Domain"] ?? string.Empty;
         _clientId = configuration["Auth0:ClientId"] ?? string.Empty;
         _clientSecret = configuration["Auth0:ClientSecret"] ?? string.Empty;
@@ -121,6 +121,27 @@ public class Auth0APIClient
         user = await _managementApiClient!.Users.UpdateAsync(userId, request);
 
         return user;
+    }
+
+    public async Task<bool> DeleteUser(string userId)
+    {
+        await CheckAndGenerateManagementApiClient();
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new DesignError("Cannot update user without a proper userId");
+        }
+
+        var user = await _managementApiClient!.Users.GetAsync(userId);
+
+        if (user == null)
+        {
+            throw new DomainError("Cannot find referenced user");
+        }
+
+        await _managementApiClient!.Users.DeleteAsync(userId);
+
+        return true;
     }
 
     public async Task SendInviteEmail(string userId)

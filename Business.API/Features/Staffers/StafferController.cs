@@ -29,7 +29,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Create(Guid companyId, StafferRequest request)
     {
-        var command = new CreateStaffer(companyId, request.Email, request.GivenName, request.FamilyName, null);
+        var command = new CreateStaffer(companyId, request.email, request.given_name, request.family_name, null);
 
         try
         {
@@ -80,7 +80,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Update(Guid companyId, Guid id, StafferRequest request)
     {
-        var command = new UpdateStaffer(companyId, id, request.Email, request.GivenName, request.FamilyName);
+        var command = new UpdateStaffer(companyId, id, request.email, request.given_name, request.family_name);
         try
         {
             var stafferModel = await UpdateStafferHandler.Handle(command);

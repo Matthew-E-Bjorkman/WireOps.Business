@@ -16,7 +16,7 @@ public class InviteStafferHandler (
 {
     public async Task<StafferModel?> Handle(InviteStaffer command)
     {
-        var company = await companyRepository.GetBy(CompanyId.From(command.Id));
+        var company = await companyRepository.GetBy(CompanyId.From(command.CompanyId));
 
         if (company == null)
         {

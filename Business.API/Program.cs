@@ -53,7 +53,7 @@ ConfigureEmail();
 var app = builder.Build();
 
 RegisterConfiguration();
-RegisterCorsForLocalDevelopment();
+RegisterCors();
 
 app.UseSwagger();
 app.UseSwaggerUI(x => {
@@ -311,12 +311,25 @@ async Task RegisterJobs()
     await scheduler.ScheduleJob(job, trigger);
 }
 
-void RegisterCorsForLocalDevelopment()
+void RegisterCors()
 {
     if (app.Environment.IsDevelopment())
     {
         app.UseCors(builder => {
             builder.WithOrigins("https://local.ui:3000") // WireOps.UI
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+    }
+
+    if (app.Environment.IsProduction())
+    {
+        app.UseCors(builder => {
+            builder.WithOrigins("https://www.invensync.com") 
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+
+            builder.WithOrigins("https://invensync.com")
                    .AllowAnyHeader()
                    .AllowAnyMethod();
         });
