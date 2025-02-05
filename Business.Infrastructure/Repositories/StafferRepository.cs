@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Common.ValueObjects.Types;
 using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
 using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 
@@ -14,8 +15,9 @@ public class StafferRepository
         : Staffer.Factory, Staffer.Repository
     {
         private readonly Dictionary<StafferId, DbStaffer> _staffers = new();
+        private bool saveValidated = false;
 
-        protected override Staffer.Data CreateData(StafferId id, CompanyId companyId, Email email, string givenName, string familyName, bool isOwner)
+        protected override Staffer.Data CreateData(StafferId id, CompanyId companyId, Email email, string givenName, string familyName, bool isOwner, RoleId? roleId)
         {
             var dbStaffer = new DbStaffer
             {
@@ -26,6 +28,12 @@ public class StafferRepository
                 FamilyName = familyName,
                 IsOwner = isOwner
             };
+
+            if (roleId.HasValue)
+            {
+                dbStaffer.RoleId = roleId.Value;
+            }
+
             _staffers.Add(id, dbStaffer);
             dbContext.Staffers.Add(dbStaffer);
             return dbStaffer;
@@ -61,6 +69,11 @@ public class StafferRepository
 
         public Task ValidateCanSave(Staffer staffer)
         {
+            if (saveValidated)
+            {
+                throw new DesignError(Error.SameAggregateValidatedMoreThanOnce);
+            }
+
             if (!_staffers.TryGetValue(staffer.Id, out var dbStaffer))
                 throw new DesignError(Error.SaveOfUnknownAggregate);
 
@@ -71,6 +84,7 @@ public class StafferRepository
                 throw new DomainError(Error.CompanyHasMultipleOwners);
 
             dbStaffer.Version++;
+            saveValidated = true;
 
             return Task.CompletedTask;
         }

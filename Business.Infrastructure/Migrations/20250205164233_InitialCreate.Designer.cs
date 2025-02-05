@@ -13,7 +13,7 @@ using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 namespace Business.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessDbContext))]
-    [Migration("20250115192535_InitialCreate")]
+    [Migration("20250205164233_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -50,6 +50,38 @@ namespace Business.Infrastructure.Migrations
                     b.ToTable("Company", (string)null);
                 });
 
+            modelBuilder.Entity("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<Instant>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("Role", (string)null);
+                });
+
             modelBuilder.Entity("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbStaffer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -78,6 +110,9 @@ namespace Business.Infrastructure.Migrations
 
                     b.Property<Instant>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text");
@@ -132,6 +167,44 @@ namespace Business.Infrastructure.Migrations
                         });
 
                     b.Navigation("Address");
+                });
+
+            modelBuilder.Entity("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbRole", b =>
+                {
+                    b.HasOne("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbCompany", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("WireOps.Business.Domain.Roles.Role+Permission", "Permissions", b1 =>
+                        {
+                            b1.Property<Guid>("RoleId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("Action")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Resource")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("RoleId", "Id");
+
+                            b1.ToTable("RolePermission", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoleId");
+                        });
+
+                    b.Navigation("Permissions");
                 });
 
             modelBuilder.Entity("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbStaffer", b =>

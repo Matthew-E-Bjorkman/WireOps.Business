@@ -3,6 +3,7 @@ using WireOps.Business.Application.Common;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Companies.Events;
+using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
 using WireOps.Business.Domain.Staffers.Events;
 
@@ -11,6 +12,8 @@ namespace WireOps.Business.Application.Companies.Create;
 public class CreateCompanyHandler (
     Company.Repository companyRepository,
     Company.Factory companyFactory,
+    Role.Repository roleRepository,
+    Role.Factory roleFactory,
     Staffer.Repository stafferRepository,
     Staffer.Factory stafferFactory,
     CompanyEventsOutbox companyEventsOutbox,
@@ -30,11 +33,14 @@ public class CreateCompanyHandler (
 
         var company = companyFactory.New(command.Name);
 
-        var staffer = stafferFactory.New(company.Id.Value, command.OwnerEmail, command.OwnerGivenName, command.OwnerFamilyName, true);
+        var ownerRole = roleFactory.New(company.Id.Value, "System Admin", true, true);
+
+        var staffer = stafferFactory.New(company.Id.Value, command.OwnerEmail, command.OwnerGivenName, command.OwnerFamilyName, true, ownerRole.Id.Value);
 
         staffer.LinkUser(command.UserId);
 
         await companyRepository.ValidateCanSave(company);
+        await roleRepository.ValidateCanSave(ownerRole);
         await stafferRepository.ValidateCanSave(staffer);
 
         var user = await auth0APIClient.UpdateUser(command.UserId, company._data.Name, company.Id.Value);

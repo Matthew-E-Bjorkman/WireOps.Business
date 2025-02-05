@@ -1,12 +1,11 @@
-﻿//using Microsoft.AspNetCore.JsonPatch;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WireOps.Business.Infrastructure.Persistence.Crud;
 using WireOps.Business.Infrastructure.Persistence.Crud.Operations;
 using WireOps.Business.Infrastructure.Persistence.Crud.Results;
 
 namespace WireOps.Business.Infrastructure.ObjectRelationalMapping.EntityFramework;
 
-public class EntityFrameworkDAO
+public class EntityFrameworkDAO //TODO: actually use this
 {
     private readonly DbContext _context;
 

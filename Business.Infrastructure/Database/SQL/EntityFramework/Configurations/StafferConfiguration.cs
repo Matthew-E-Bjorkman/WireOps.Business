@@ -16,11 +16,17 @@ public class StafferConfiguration : IEntityTypeConfiguration<DbStaffer>
         stafferConfiguration.Property(s => s.GivenName);
         stafferConfiguration.Property(s => s.FamilyName);
         stafferConfiguration.Property(s => s.IsOwner);
+        stafferConfiguration.Property(s => s.RoleId).IsRequired(false);
         stafferConfiguration.Property(s => s.Version).IsConcurrencyToken();
 
         stafferConfiguration.HasOne<DbCompany>()
             .WithMany()
             .HasForeignKey(s => s.CompanyId)
             .IsRequired();
+
+        stafferConfiguration.HasOne<DbRole>()
+            .WithMany()
+            .HasForeignKey(s => s.RoleId)
+            .IsRequired(false);
     }
 }

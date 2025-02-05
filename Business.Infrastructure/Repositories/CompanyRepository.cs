@@ -14,6 +14,7 @@ public class CompanyRepository
         : Company.Factory, Company.Repository
     {
         private readonly Dictionary<CompanyId, DbCompany> _companies = new();
+        private bool saveValidated = false;
 
         protected override Company.Data CreateData(CompanyId id, string name)
         {
@@ -48,10 +49,17 @@ public class CompanyRepository
 
         public Task ValidateCanSave(Company company)
         {
+            if (saveValidated)
+            {
+                throw new DesignError(Error.SameAggregateValidatedMoreThanOnce);
+            }
+
             if (!_companies.TryGetValue(company.Id, out var dbCompany))
                 throw new DesignError(Error.SaveOfUnknownAggregate);
 
             dbCompany.Version++;
+
+            saveValidated = true;
 
             return Task.CompletedTask;
         }

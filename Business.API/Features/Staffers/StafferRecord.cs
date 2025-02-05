@@ -5,6 +5,7 @@ namespace WireOps.Business.API.Features.Staffers
     public class StafferRecord
     {
         public required Guid id { get; set; }
+        public required Guid company_id { get; set; }
         public required string email { get; set; }
         public string? user_id { get; set; }
         public required string given_name { get; set; }
@@ -16,6 +17,7 @@ namespace WireOps.Business.API.Features.Staffers
             return new StafferRecord
             {
                 id = model.Id,
+                company_id = model.CompanyId,
                 email = model.Email,
                 user_id = model.UserId,
                 given_name = model.GivenName,

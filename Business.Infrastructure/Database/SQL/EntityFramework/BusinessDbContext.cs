@@ -15,6 +15,7 @@ public class BusinessDbContext(DbContextOptions<BusinessDbContext> options, IClo
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public DbSet<DbStaffer> Staffers { get; set; }
     public DbSet<DbCompany> Companies { get; set; }
+    public DbSet<DbRole> Roles { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configuration)
@@ -28,6 +29,7 @@ public class BusinessDbContext(DbContextOptions<BusinessDbContext> options, IClo
     {
         modelBuilder.ApplyConfiguration(new StafferConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyConfiguration());
+        modelBuilder.ApplyConfiguration(new RoleConfiguration());
     }
 
     public override int SaveChanges()

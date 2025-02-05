@@ -3,3 +3,6 @@ Migrations:
 	Script: dotnet ef migrations script -p Business.Infrastructure -s Business.API -o EFMigrationScript.sql
 	Update: dotnet ef database update -p Business.Infrastructure -s Business.API
 	Remove: dotnet ef migrations remove -p Business.Infrastructure -s Business.API
+
+
+	E.g. dotnet ef migrations add InitialCreate -p Business.Infrastructure -s Business.API

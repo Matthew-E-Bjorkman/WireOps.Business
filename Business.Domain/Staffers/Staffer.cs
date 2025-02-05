@@ -1,4 +1,5 @@
 ﻿using WireOps.Business.Domain.Common.ValueObjects.Types;
+using WireOps.Business.Domain.Roles;
 
 namespace WireOps.Business.Domain.Staffers;
 
@@ -28,6 +29,13 @@ public partial class Staffer
         {
             _data.SetFamilyName(givenName);
         };
+    }
 
+    public void AssignRole(RoleId roleId)
+    {
+        if (roleId != _data.RoleId)
+        {
+            _data.SetRoleId(roleId);
+        }
     }
 }

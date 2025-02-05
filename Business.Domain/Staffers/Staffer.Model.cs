@@ -1,6 +1,7 @@
 ﻿using Business.Domain.Common.Definitions;
 using WireOps.Business.Domain.Common.ValueObjects.Types;
 using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Roles;
 
 namespace WireOps.Business.Domain.Staffers;
 
@@ -13,6 +14,7 @@ public partial class Staffer
     {
         public StafferId Id { get; }
         public CompanyId CompanyId { get; }
+        public RoleId? RoleId { get; }
         public Email Email { get; }
         public string? UserId { get; }
         public string GivenName { get; }
@@ -25,5 +27,6 @@ public partial class Staffer
         void SetEmail(Email email);
         void SetFamilyName(string givenName);
         void SetGivenName(string givenName);
+        void SetRoleId(RoleId roleId);
     }
 }

@@ -16,6 +16,12 @@ using WireOps.Business.Application.Companies;
 using WireOps.Business.Application.Companies.Create;
 using WireOps.Business.Application.Companies.Get;
 using WireOps.Business.Application.Companies.Update;
+using WireOps.Business.Application.Roles;
+using WireOps.Business.Application.Roles.Create;
+using WireOps.Business.Application.Roles.Delete;
+using WireOps.Business.Application.Roles.Get;
+using WireOps.Business.Application.Roles.GetList;
+using WireOps.Business.Application.Roles.Update;
 using WireOps.Business.Application.Staffers;
 using WireOps.Business.Application.Staffers.Create;
 using WireOps.Business.Application.Staffers.Delete;
@@ -25,6 +31,8 @@ using WireOps.Business.Application.Staffers.Update;
 using WireOps.Business.Domain.Common.Definitions;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Companies.Events;
+using WireOps.Business.Domain.Roles;
+using WireOps.Business.Domain.Roles.Events;
 using WireOps.Business.Domain.Staffers;
 using WireOps.Business.Domain.Staffers.Events;
 using WireOps.Business.Infrastructure.Communication.Outbox.Common;
@@ -132,6 +140,9 @@ void ConfigurePersistence()
     //Company
     builder.Services.AddScoped<CompanyRepository.EntityFramework>();
 
+    //Role
+    builder.Services.AddScoped<RoleRepository.EntityFramework>();
+
     //Staffer
     builder.Services.AddScoped<StafferRepository.EntityFramework>();
 }
@@ -150,6 +161,9 @@ void ConfigureCommunication()
     //Company
     builder.Services.AddScoped<CompanyEventsOutbox, KafkaCompanyEventsOutbox>();
 
+    //Role
+    builder.Services.AddScoped<RoleEventsOutbox, KafkaRoleEventsOutbox>();
+
     //Staffer
     builder.Services.AddScoped<StafferEventsOutbox, KafkaStafferEventsOutbox>();
 }
@@ -159,6 +173,9 @@ void ConfigureRepositories()
     //Company
     builder.Services.AddScoped<Company.Repository>(s => s.GetService<CompanyRepository.EntityFramework>()!);
 
+    //Role
+    builder.Services.AddScoped<Role.Repository>(s => s.GetService<RoleRepository.EntityFramework>()!);
+
     //Staffer
     builder.Services.AddScoped<Staffer.Repository>(s => s.GetService<StafferRepository.EntityFramework>()!);
 }
@@ -167,6 +184,9 @@ void ConfigureFactories()
 {
     //Company
     builder.Services.AddScoped<Company.Factory>(s => s.GetService<CompanyRepository.EntityFramework>()!);
+
+    //Role
+    builder.Services.AddScoped<Role.Factory>(s => s.GetService<RoleRepository.EntityFramework>()!);
 
     //Staffer
     builder.Services.AddScoped<Staffer.Factory>(s => s.GetService<StafferRepository.EntityFramework>()!);
@@ -179,6 +199,14 @@ void ConfigureHandlers()
 
     builder.Services.AddScoped<CommandHandler<CreateCompany, CompanyModel>, CreateCompanyHandler>();
     builder.Services.AddScoped<CommandHandler<UpdateCompany, CompanyModel?>, UpdateCompanyHandler>();
+
+    //Role
+    builder.Services.AddScoped<QueryHandler<GetRole, RoleModel?>, GetRoleHandler>();
+    builder.Services.AddScoped<QueryHandler<GetRoleList, IReadOnlyList<RoleModel>>, GetRoleListHandler>();
+
+    builder.Services.AddScoped<CommandHandler<CreateRole, RoleModel>, CreateRoleHandler>();
+    builder.Services.AddScoped<CommandHandler<UpdateRole, RoleModel?>, UpdateRoleHandler>();
+    builder.Services.AddScoped<CommandHandler<DeleteRole, bool>, DeleteRoleHandler>();
 
     //Staffer
     builder.Services.AddScoped<QueryHandler<GetStaffer, StafferModel?>, GetStafferHandler>();
@@ -246,6 +274,20 @@ void ConfigureAuth0()
             }
         );
         options.AddPolicy(
+            "read:roles",
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("read:roles", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
+        );
+        options.AddPolicy(
+            "write:roles",
+            policy => {
+                policy.Requirements.Add(new HasScopeRequirement("write:roles", $"https://{domain}/"));
+                policy.Requirements.Add(new BelongsToCompanyRequirement());
+            }
+        );
+        options.AddPolicy(
             "read:staffers",
             policy => {
                 policy.Requirements.Add(new HasScopeRequirement("read:staffers", $"https://{domain}/"));
@@ -283,8 +325,8 @@ void ConfigureEmail()
 void RegisterConfiguration()
 {
     app.Services.GetRequiredService<MessageTypes>().Register<CompanyEvent>("CompanyId", new List<string>()); //TODO: This is probably very wrong  
+    app.Services.GetRequiredService<MessageTypes>().Register<RoleEvent>("RoleId", new List<string>()); //TODO: This is probably very wrong  
     app.Services.GetRequiredService<MessageTypes>().Register<StafferEvent>("StafferId", new List<string>()); //TODO: This is probably very wrong  
-
 }
 
 async Task RegisterJobs()
