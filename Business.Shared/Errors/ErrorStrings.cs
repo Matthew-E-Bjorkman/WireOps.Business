@@ -34,4 +34,7 @@ public static class Error
 
     public const string InvalidResourceAction =
         "Resource action must be either 'read' or 'write'";
+
+    public const string StafferUserIdAlreadyAssigned =
+        "Cannot link user id to staffer that is already linked";
 }

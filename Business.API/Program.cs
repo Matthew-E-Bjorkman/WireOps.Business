@@ -1,4 +1,4 @@
-using Business.Application.Auth;
+using WireOps.Business.Application.Auth;
 using Business.Application.Email;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,6 +25,7 @@ using WireOps.Business.Application.Roles.Update;
 using WireOps.Business.Application.Staffers;
 using WireOps.Business.Application.Staffers.Create;
 using WireOps.Business.Application.Staffers.Delete;
+using WireOps.Business.Application.Staffers.DomainEvents;
 using WireOps.Business.Application.Staffers.Get;
 using WireOps.Business.Application.Staffers.GetList;
 using WireOps.Business.Application.Staffers.Update;
@@ -40,6 +41,7 @@ using WireOps.Business.Infrastructure.Communication.Outbox.Kafka;
 using WireOps.Business.Infrastructure.Communication.Outbox.Kafka.Implementation;
 using WireOps.Business.Infrastructure.Communication.Outbox.Postgres;
 using WireOps.Business.Infrastructure.Communication.Outbox.Quartz;
+using WireOps.Business.Infrastructure.Communication.Publisher;
 using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 using WireOps.Business.Infrastructure.Repositories;
 
@@ -157,6 +159,7 @@ void ConfigureCommunication()
     builder.Services.AddScoped<ProducerConfig>();
     builder.Services.AddScoped<KafkaMessageProducer>();
     builder.Services.AddScoped<OutboxMessageProcessor, KafkaOutboxMessageProcessor>();
+    builder.Services.AddSingleton<DomainEventPublisher>();
 
     //Company
     builder.Services.AddScoped<CompanyEventsOutbox, KafkaCompanyEventsOutbox>();
@@ -217,6 +220,9 @@ void ConfigureHandlers()
     builder.Services.AddScoped<CommandHandler<DeleteStaffer, bool>, DeleteStafferHandler>();
     builder.Services.AddScoped<CommandHandler<LinkUserToStaffer, StafferModel?>, LinkUserToStafferHandler>();
     builder.Services.AddScoped<CommandHandler<InviteStaffer, StafferModel?>, InviteStafferHandler>();
+
+    builder.Services.AddScoped<DomainEventHandler<RolePermissionsChanged>, RolePermissionsChangedHandler>();
+    builder.Services.AddScoped<DomainEventHandler<StafferRoleAssigned>, StafferRoleAssignedHandler>();
 }
 
 void ConfigureDecorators()

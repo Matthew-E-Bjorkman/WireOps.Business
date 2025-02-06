@@ -42,6 +42,7 @@ namespace Business.Infrastructure.Migrations
                     CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     IsAdmin = table.Column<bool>(type: "boolean", nullable: false),
+                    IsOwnerRole = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     ModifiedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
@@ -51,33 +52,6 @@ namespace Business.Infrastructure.Migrations
                     table.PrimaryKey("PK_Role", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Role_Company_CompanyId",
-                        column: x => x.CompanyId,
-                        principalTable: "Company",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Staffer",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: true),
-                    GivenName = table.Column<string>(type: "text", nullable: false),
-                    FamilyName = table.Column<string>(type: "text", nullable: false),
-                    IsOwner = table.Column<bool>(type: "boolean", nullable: false),
-                    Version = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
-                    ModifiedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Staffer", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Staffer_Company_CompanyId",
                         column: x => x.CompanyId,
                         principalTable: "Company",
                         principalColumn: "Id",
@@ -105,6 +79,38 @@ namespace Business.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Staffer",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    GivenName = table.Column<string>(type: "text", nullable: false),
+                    FamilyName = table.Column<string>(type: "text", nullable: false),
+                    IsOwner = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    ModifiedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Staffer", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Staffer_Company_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Company",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Staffer_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Role",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Role_CompanyId",
                 table: "Role",
@@ -114,6 +120,11 @@ namespace Business.Infrastructure.Migrations
                 name: "IX_Staffer_CompanyId",
                 table: "Staffer",
                 column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Staffer_RoleId",
+                table: "Staffer",
+                column: "RoleId");
         }
 
         /// <inheritdoc />

@@ -4,5 +4,6 @@ namespace WireOps.Business.Domain.Staffers.Events;
 
 public interface StafferEvent : DomainEvent
 {
+    public Guid CompanyId { get; }
     public Guid StafferId { get; }
 }

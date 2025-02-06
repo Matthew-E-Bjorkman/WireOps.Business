@@ -82,7 +82,7 @@ public class BelongsToCompanyHandler : AuthorizationHandler<BelongsToCompanyRequ
                 var companyIdAccessor = routeData.Values.ContainsKey("companyId") ? "companyId" : "id";
                 var companyId = routeData.Values[companyIdAccessor].ToString();
 
-                if (staffer != null && Guid.Parse(companyId!) == staffer._data.CompanyId.Value)
+                if (staffer != null && Guid.Parse(companyId!) == staffer.CompanyId.Value)
                 {
                     context.Succeed(requirement);
                 }

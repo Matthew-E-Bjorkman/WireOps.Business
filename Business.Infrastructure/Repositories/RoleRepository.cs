@@ -3,14 +3,19 @@ using Microsoft.EntityFrameworkCore;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Roles;
+using WireOps.Business.Domain.Roles.Events;
+using WireOps.Business.Infrastructure.Communication.Publisher;
 using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 
 namespace WireOps.Business.Infrastructure.Repositories;
 
 public class RoleRepository
 {
-    public class EntityFramework(BusinessDbContext dbContext)
-        : Role.Factory, Role.Repository
+    public class EntityFramework(
+        BusinessDbContext dbContext,
+        RoleEventsOutbox roleEventsOutbox,
+        DomainEventPublisher domainEventPublisher
+    ) : Role.Factory, Role.Repository
     {
         private readonly Dictionary<RoleId, DbRole> _roles = new();
         private bool saveValidated = false;
@@ -50,7 +55,7 @@ public class RoleRepository
             return dbRoles.Select(Role.RestoreFrom).ToList();
         }
 
-        public Task ValidateCanSave(Role role)
+        public async Task ValidateAndPublish(Role role)
         {
             if (saveValidated)
             {
@@ -65,21 +70,30 @@ public class RoleRepository
 
             if (_roles.Values.Any(o => o != dbRole && o.Name == dbRole.Name))
                 throw new DomainError(Error.NameAlreadyInUse);
-
             dbRole.Version++;
-            saveValidated = true;
 
-            return Task.CompletedTask;
+            foreach (var domainEvent in role.DomainEvents)
+            {
+                await domainEventPublisher.PublishAsync(domainEvent);
+                roleEventsOutbox.Add(domainEvent);
+            }
+
+            saveValidated = true;
         }
 
         public Task Save() => dbContext.SaveChangesAsync();
 
-        public Task Delete(Role role)
+        public async Task Delete(Role role)
         {
             if (!_roles.TryGetValue(role.Id, out var dbRole))
                 throw new DesignError(Error.DeleteOfUnknownAggregate);
             dbContext.Roles.Remove(dbRole);
-            return dbContext.SaveChangesAsync();
+
+            var roleDeletedEvent = Role.Events.RoleDeleted(role);
+            await domainEventPublisher.PublishAsync(roleDeletedEvent);
+            roleEventsOutbox.Add(roleDeletedEvent);
+
+            await dbContext.SaveChangesAsync();
         }
     }
 }

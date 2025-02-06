@@ -14,7 +14,7 @@ public class CompanyModel
     {
         return new CompanyModel
         {
-            Id = aggregate._data.Id.Value,
+            Id = aggregate.Id.Value,
             Name = aggregate._data.Name,
             Address = AddressModel.MapFromAggregate(aggregate._data.Address)
         };

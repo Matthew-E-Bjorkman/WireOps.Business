@@ -8,7 +8,7 @@ public partial class Role
     {
         Task<IReadOnlyList<Role>> GetAllForCompany(CompanyId companyId);
         Task<Role> GetBy(CompanyId companyId, RoleId id);
-        Task ValidateCanSave(Role role);
+        Task ValidateAndPublish(Role role);
         Task Save();
         Task Delete(Role role);
     }

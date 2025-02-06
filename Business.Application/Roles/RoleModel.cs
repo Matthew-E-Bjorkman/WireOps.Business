@@ -16,8 +16,8 @@ public class RoleModel
     {
         return new RoleModel
         {
-            Id = aggregate._data.Id.Value,
-            CompanyId = aggregate._data.CompanyId.Value,
+            Id = aggregate.Id.Value,
+            CompanyId = aggregate.CompanyId.Value,
             Name = aggregate._data.Name,
             IsAdmin = aggregate._data.IsAdmin,
             IsOwnerRole = aggregate._data.IsOwnerRole,

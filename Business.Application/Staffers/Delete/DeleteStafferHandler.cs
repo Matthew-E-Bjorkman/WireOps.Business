@@ -1,4 +1,4 @@
-﻿using Business.Application.Auth;
+﻿using WireOps.Business.Application.Auth;
 using WireOps.Business.Application.Common;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
@@ -8,8 +8,7 @@ using WireOps.Business.Domain.Staffers.Events;
 namespace WireOps.Business.Application.Staffers.Delete;
 
 public class DeleteStafferHandler (
-    Staffer.Repository repository, 
-    StafferEventsOutbox eventsOutbox,
+    Staffer.Repository repository,
     Auth0APIClient auth0APIClient
 ) : CommandHandler<DeleteStaffer, bool>
 {
@@ -36,11 +35,6 @@ public class DeleteStafferHandler (
 
         await repository.Delete(staffer);
 
-        eventsOutbox.Add(DeleteEventFrom(staffer.Id)); 
-
         return true;
     }
-
-    private static StafferDeleted DeleteEventFrom(StafferId stafferId) =>
-        new(stafferId.Value);
 }

@@ -16,8 +16,8 @@ public class StafferModel
     {
         return new StafferModel
         {
-            Id = aggregate._data.Id.Value,
-            CompanyId = aggregate._data.CompanyId.Value,
+            Id = aggregate.Id.Value,
+            CompanyId = aggregate.CompanyId.Value,
             Email = aggregate._data.Email.Value,
             UserId = aggregate._data.UserId,
             GivenName = aggregate._data.GivenName,

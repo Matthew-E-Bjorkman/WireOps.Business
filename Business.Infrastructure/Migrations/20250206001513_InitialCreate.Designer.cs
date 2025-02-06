@@ -13,7 +13,7 @@ using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 namespace Business.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessDbContext))]
-    [Migration("20250205164233_InitialCreate")]
+    [Migration("20250206001513_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -64,6 +64,9 @@ namespace Business.Infrastructure.Migrations
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsOwnerRole")
+                        .HasColumnType("boolean");
+
                     b.Property<Instant>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -111,7 +114,7 @@ namespace Business.Infrastructure.Migrations
                     b.Property<Instant>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<Guid?>("RoleId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
@@ -124,6 +127,8 @@ namespace Business.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Staffer", (string)null);
                 });
@@ -214,6 +219,10 @@ namespace Business.Infrastructure.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Business.Infrastructure.Database.SQL.EntityFramework.Objects.DbRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId");
                 });
 #pragma warning restore 612, 618
         }

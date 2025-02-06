@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Data;
 using WireOps.Business.Common.Errors;
+using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Companies.Events;
+using WireOps.Business.Domain.Roles.Events;
 
 namespace WireOps.Business.Domain.Roles;
 
 public partial class Role
 {
     public RoleId Id => _data.Id;
+    public CompanyId CompanyId => _data.CompanyId;
+    public List<RoleEvent> DomainEvents { get; } = [];
 
     public void ChangeName(string name)
     {
@@ -16,33 +21,43 @@ public partial class Role
         }
     }
 
-    public void SetIsAdmin(bool isAdmin)
+    public void AssignPermissions(bool isAdmin, IEnumerable<Permission>? permissions)
     {
+        bool isDirty = false;
+
         if (isAdmin != _data.IsAdmin)
         {
             _data.SetIsAdmin(isAdmin);
+            isDirty = true;
         }
-    }
 
-    public void AssignPermissions(IEnumerable<Permission> permissions)
-    {
-        var newPermissions = permissions.Where(permissions => !_data.Permissions.Contains(permissions));
-        var removedPermissions = _data.Permissions.Where(permission => !permissions.Contains(permission));
-
-        if (newPermissions.Any())
+        if (permissions is not null)
         {
-            foreach (var permission in newPermissions)
+            var newPermissions = permissions.Where(permissions => !_data.Permissions.Contains(permissions));
+            var removedPermissions = _data.Permissions.Where(permission => !permissions.Contains(permission));
+
+            if (newPermissions.Any())
             {
-                _data.Add(permission);
+                foreach (var permission in newPermissions)
+                {
+                    _data.Add(permission);
+                }
+                isDirty = true;
+            }
+
+            if (removedPermissions.Any())
+            {
+                foreach (var permission in removedPermissions)
+                {
+                    _data.Remove(permission);
+                }
+                isDirty = true;
             }
         }
         
-        if (removedPermissions.Any())
+        if (isDirty)
         {
-            foreach (var permission in removedPermissions)
-            {
-                _data.Remove(permission);
-            }
+            DomainEvents.Add(Events.RolePermissionsChanged(this));
         }
-    }
+    }       
 }

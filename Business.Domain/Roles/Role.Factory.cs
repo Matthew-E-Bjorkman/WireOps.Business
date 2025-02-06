@@ -9,7 +9,9 @@ public partial class Role
         public Role New(Guid companyId, string name, bool isAdmin, bool isOwnerRole)
         {
             var data = CreateData(RoleId.New(), CompanyId.From(companyId), name, isAdmin, isOwnerRole);
-            return new Role(data);
+            var role = new Role(data);
+            role.DomainEvents.Add(Events.RoleCreated(role));
+            return role;
         }
 
         protected abstract Data CreateData(RoleId id, CompanyId companyId, string name, bool isAdmin, bool isOwnerRole);

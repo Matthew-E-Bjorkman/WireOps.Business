@@ -25,27 +25,12 @@ CREATE TABLE "Role" (
     "CompanyId" uuid NOT NULL,
     "Name" text NOT NULL,
     "IsAdmin" boolean NOT NULL,
+    "IsOwnerRole" boolean NOT NULL,
     "Version" integer NOT NULL,
     "CreatedAt" timestamp with time zone NOT NULL,
     "ModifiedAt" timestamp with time zone NOT NULL,
     CONSTRAINT "PK_Role" PRIMARY KEY ("Id"),
     CONSTRAINT "FK_Role_Company_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Company" ("Id") ON DELETE CASCADE
-);
-
-CREATE TABLE "Staffer" (
-    "Id" uuid NOT NULL,
-    "CompanyId" uuid NOT NULL,
-    "RoleId" uuid NOT NULL,
-    "Email" text NOT NULL,
-    "UserId" text,
-    "GivenName" text NOT NULL,
-    "FamilyName" text NOT NULL,
-    "IsOwner" boolean NOT NULL,
-    "Version" integer NOT NULL,
-    "CreatedAt" timestamp with time zone NOT NULL,
-    "ModifiedAt" timestamp with time zone NOT NULL,
-    CONSTRAINT "PK_Staffer" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_Staffer_Company_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Company" ("Id") ON DELETE CASCADE
 );
 
 CREATE TABLE "RolePermission" (
@@ -57,29 +42,31 @@ CREATE TABLE "RolePermission" (
     CONSTRAINT "FK_RolePermission_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE CASCADE
 );
 
+CREATE TABLE "Staffer" (
+    "Id" uuid NOT NULL,
+    "CompanyId" uuid NOT NULL,
+    "RoleId" uuid,
+    "Email" text NOT NULL,
+    "UserId" text,
+    "GivenName" text NOT NULL,
+    "FamilyName" text NOT NULL,
+    "IsOwner" boolean NOT NULL,
+    "Version" integer NOT NULL,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    "ModifiedAt" timestamp with time zone NOT NULL,
+    CONSTRAINT "PK_Staffer" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Staffer_Company_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Company" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_Staffer_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id")
+);
+
 CREATE INDEX "IX_Role_CompanyId" ON "Role" ("CompanyId");
 
 CREATE INDEX "IX_Staffer_CompanyId" ON "Staffer" ("CompanyId");
 
-INSERT INTO "EntityFrameworkMigrationHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250205164233_InitialCreate', '9.0.0');
-
-ALTER TABLE "Role" ADD "IsOwnerRole" boolean NOT NULL DEFAULT FALSE;
-
-INSERT INTO "EntityFrameworkMigrationHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250205200202_InitialCreate2', '9.0.0');
-
 CREATE INDEX "IX_Staffer_RoleId" ON "Staffer" ("RoleId");
 
-ALTER TABLE "Staffer" ADD CONSTRAINT "FK_Staffer_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id");
-
 INSERT INTO "EntityFrameworkMigrationHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250205201057_InitialCreate3', '9.0.0');
-
-ALTER TABLE "Staffer" ALTER COLUMN "RoleId" DROP NOT NULL;
-
-INSERT INTO "EntityFrameworkMigrationHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250205201341_InitialCreate4', '9.0.0');
+VALUES ('20250206001513_InitialCreate', '9.0.0');
 
 COMMIT;
 

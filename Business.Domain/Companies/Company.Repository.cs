@@ -6,7 +6,7 @@ public partial class Company
     {
         Task<IReadOnlyList<Company>> GetAll();
         Task<Company> GetBy(CompanyId id);
-        Task ValidateCanSave(Company company);
+        Task ValidateAndPublish(Company company);
         Task Save();
         Task Delete(Company company);
     }

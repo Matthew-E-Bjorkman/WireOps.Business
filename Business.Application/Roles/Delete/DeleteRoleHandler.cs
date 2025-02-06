@@ -6,8 +6,7 @@ using WireOps.Business.Domain.Roles;
 namespace WireOps.Business.Application.Roles.Delete;
 
 public class DeleteRoleHandler(
-    Role.Repository repository,
-    RoleEventsOutbox eventsOutbox
+    Role.Repository repository
 ) : CommandHandler<DeleteRole, bool>
 {
     public async Task<bool> Handle(DeleteRole command)
@@ -21,11 +20,6 @@ public class DeleteRoleHandler(
 
         await repository.Delete(role);
 
-        eventsOutbox.Add(DeleteEventFrom(role.Id));
-
         return true;
     }
-
-    private static RoleDeleted DeleteEventFrom(RoleId roleId) =>
-        new(roleId.Value);
 }

@@ -1,5 +1,6 @@
-﻿using Business.Application.Auth;
+﻿using WireOps.Business.Application.Auth;
 using WireOps.Business.Application.Common;
+using WireOps.Business.Application.Staffers.SetClaims;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Companies.Events;
@@ -16,8 +17,6 @@ public class CreateCompanyHandler (
     Role.Factory roleFactory,
     Staffer.Repository stafferRepository,
     Staffer.Factory stafferFactory,
-    CompanyEventsOutbox companyEventsOutbox,
-    StafferEventsOutbox stafferEventsOutbox,
     Auth0APIClient auth0APIClient
 ) : CommandHandler<CreateCompany, CompanyModel>
 {
@@ -39,11 +38,11 @@ public class CreateCompanyHandler (
 
         staffer.LinkUser(command.UserId);
 
-        await companyRepository.ValidateCanSave(company);
-        await roleRepository.ValidateCanSave(ownerRole);
-        await stafferRepository.ValidateCanSave(staffer);
+        await companyRepository.ValidateAndPublish(company);
+        await roleRepository.ValidateAndPublish(ownerRole);
+        await stafferRepository.ValidateAndPublish(staffer);
 
-        var user = await auth0APIClient.UpdateUser(command.UserId, company._data.Name, company.Id.Value);
+        var user = await auth0APIClient.UpdateUser(command.UserId, company._data.Name, company.Id.Value, ["admin"]);
 
         if (user == null)
         {
@@ -52,17 +51,8 @@ public class CreateCompanyHandler (
 
         await companyRepository.Save();
 
-        companyEventsOutbox.Add(CreateEventFrom(company.Id));
-        stafferEventsOutbox.Add(CreateEventFrom(staffer.Id));
-
         var companyModel = CompanyModel.MapFromAggregate(company);
 
         return companyModel;
     }
-
-    private static CompanyCreated CreateEventFrom(CompanyId companyId) =>
-        new(companyId.Value); 
-
-    private static StafferCreated CreateEventFrom(StafferId stafferId) =>
-        new(stafferId.Value);
 }

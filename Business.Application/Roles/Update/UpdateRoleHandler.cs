@@ -6,8 +6,7 @@ using WireOps.Business.Domain.Roles;
 namespace WireOps.Business.Application.Roles.Update;
 
 public class UpdateRoleHandler(
-    Role.Repository repository,
-    RoleEventsOutbox eventsOutbox
+    Role.Repository repository
 ) : CommandHandler<UpdateRole, RoleModel?>
 {
     public async Task<RoleModel?> Handle(UpdateRole command)
@@ -19,18 +18,11 @@ public class UpdateRoleHandler(
             return null;
         }
 
-        role.AssignPermissions(command.Permissions?.Select(p => new Role.Permission(role.Id, p.Resource, p.Action)) ?? []);
+        role.AssignPermissions(command.IsAdmin, command.Permissions?.Select(p => new Role.Permission(role.Id, p.Resource, p.Action)) ?? []);
         role.ChangeName(command.Name);
-        role.SetIsAdmin(command.IsAdmin);
-
-        await repository.ValidateCanSave(role);
+        await repository.ValidateAndPublish(role);
         await repository.Save();
-
-        eventsOutbox.Add(UpdateEventFrom(role.Id));
 
         return RoleModel.MapFromAggregate(role);
     }
-
-    private static RoleUpdated UpdateEventFrom(RoleId roleId) =>
-        new(roleId.Value);
 }

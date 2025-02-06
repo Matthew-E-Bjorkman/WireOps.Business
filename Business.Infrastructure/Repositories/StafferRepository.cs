@@ -1,18 +1,24 @@
 ﻿using Business.Infrastructure.Database.SQL.EntityFramework.Objects;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Common.ValueObjects.Types;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
+using WireOps.Business.Domain.Staffers.Events;
+using WireOps.Business.Infrastructure.Communication.Publisher;
 using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 
 namespace WireOps.Business.Infrastructure.Repositories;
 
 public class StafferRepository
 {
-    public class EntityFramework(BusinessDbContext dbContext)
-        : Staffer.Factory, Staffer.Repository
+    public class EntityFramework(
+        BusinessDbContext dbContext,
+        StafferEventsOutbox stafferEventsOutbox,
+        DomainEventPublisher domainEventPublisher
+    ) : Staffer.Factory, Staffer.Repository
     {
         private readonly Dictionary<StafferId, DbStaffer> _staffers = new();
         private bool saveValidated = false;
@@ -31,7 +37,7 @@ public class StafferRepository
 
             if (roleId.HasValue)
             {
-                dbStaffer.RoleId = roleId.Value;
+                dbStaffer.RoleId = roleId;
             }
 
             _staffers.Add(id, dbStaffer);
@@ -67,7 +73,13 @@ public class StafferRepository
             return dbStaffers.Select(Staffer.RestoreFrom).ToList();
         }
 
-        public Task ValidateCanSave(Staffer staffer)
+        public async Task<IReadOnlyList<Staffer>> GetAllByRole(CompanyId companyId, RoleId roleId)
+        {
+            var dbStaffers = await dbContext.Staffers.Where(s => s.CompanyId == companyId && s.RoleId == roleId).ToListAsync();
+            return dbStaffers.Select(Staffer.RestoreFrom).ToList();
+        }
+
+        public async Task ValidateAndPublish(Staffer staffer)
         {
             if (saveValidated)
             {
@@ -82,21 +94,30 @@ public class StafferRepository
 
             if (_staffers.Values.Any(o => o != dbStaffer && o.Email == dbStaffer.Email))
                 throw new DomainError(Error.CompanyHasMultipleOwners);
-
             dbStaffer.Version++;
-            saveValidated = true;
 
-            return Task.CompletedTask;
+            foreach (var domainEvent in staffer.DomainEvents)
+            {
+                await domainEventPublisher.PublishAsync(domainEvent);
+                stafferEventsOutbox.Add(domainEvent);
+            }
+
+            saveValidated = true;
         }
 
         public Task Save() => dbContext.SaveChangesAsync();
 
-        public Task Delete(Staffer staffer)
+        public async Task Delete(Staffer staffer)
         {
             if (!_staffers.TryGetValue(staffer.Id, out var dbStaffer))
                 throw new DesignError(Error.DeleteOfUnknownAggregate);
             dbContext.Staffers.Remove(dbStaffer);
-            return dbContext.SaveChangesAsync();
+
+            var stafferDeletedEvent = Staffer.Events.StafferDeleted(staffer);
+            await domainEventPublisher.PublishAsync(stafferDeletedEvent);
+            stafferEventsOutbox.Add(stafferDeletedEvent);
+
+            await dbContext.SaveChangesAsync();
         }
     }
 }

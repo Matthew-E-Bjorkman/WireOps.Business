@@ -1,17 +1,20 @@
 ﻿using Business.Infrastructure.Database.SQL.EntityFramework.Objects;
 using Microsoft.EntityFrameworkCore;
-using System.Data.Common;
 using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
-using WireOps.Business.Domain.Staffers;
+using WireOps.Business.Domain.Companies.Events;
+using WireOps.Business.Infrastructure.Communication.Publisher;
 using WireOps.Business.Infrastructure.Database.SQL.EntityFramework;
 
 namespace WireOps.Business.Infrastructure.Repositories;
 
 public class CompanyRepository
 {
-    public class EntityFramework(BusinessDbContext dbContext)
-        : Company.Factory, Company.Repository
+    public class EntityFramework(
+        BusinessDbContext dbContext,
+        CompanyEventsOutbox companyEventsOutbox,
+        DomainEventPublisher domainEventPublisher
+    ) : Company.Factory, Company.Repository
     {
         private readonly Dictionary<CompanyId, DbCompany> _companies = new();
         private bool saveValidated = false;
@@ -47,7 +50,7 @@ public class CompanyRepository
             return dbCompanies.Select(Company.RestoreFrom).ToList();
         }
 
-        public Task ValidateCanSave(Company company)
+        public async Task ValidateAndPublish(Company company)
         {
             if (saveValidated)
             {
@@ -59,19 +62,28 @@ public class CompanyRepository
 
             dbCompany.Version++;
 
-            saveValidated = true;
+            foreach (var domainEvent in company.DomainEvents)
+            {
+                await domainEventPublisher.PublishAsync(domainEvent);
+                companyEventsOutbox.Add(domainEvent);
+            }
 
-            return Task.CompletedTask;
+            saveValidated = true;
         }
 
         public Task Save() => dbContext.SaveChangesAsync();
 
-        public Task Delete(Company company)
+        public async Task Delete(Company company)
         {
             if (!_companies.TryGetValue(company.Id, out var dbCompany))
                 throw new DesignError(Error.DeleteOfUnknownAggregate);
             dbContext.Companies.Remove(dbCompany);
-            return dbContext.SaveChangesAsync();
+
+            var companyDeletedEvent = Company.Events.CompanyDeleted(company);
+            await domainEventPublisher.PublishAsync(companyDeletedEvent);
+            companyEventsOutbox.Add(companyDeletedEvent);
+
+            await dbContext.SaveChangesAsync();
         }
     }
 }

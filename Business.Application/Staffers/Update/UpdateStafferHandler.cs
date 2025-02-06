@@ -1,18 +1,19 @@
 ﻿using WireOps.Business.Application.Common;
 using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
 using WireOps.Business.Domain.Staffers.Events;
 
 namespace WireOps.Business.Application.Staffers.Update;
 
 public class UpdateStafferHandler (
-    Staffer.Repository repository, 
-    StafferEventsOutbox eventsOutbox
+    Staffer.Repository stafferRepository,
+    Role.Repository roleRepository
 ) : CommandHandler<UpdateStaffer, StafferModel?>
 {
     public async Task<StafferModel?> Handle(UpdateStaffer command)
     {
-        var staffer = await repository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
+        var staffer = await stafferRepository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
 
         if (staffer == null)
         {
@@ -21,14 +22,19 @@ public class UpdateStafferHandler (
 
         staffer.ChangeInformation(command.Email, command.GivenName, command.FamilyName);
 
-        await repository.ValidateCanSave(staffer);
-        await repository.Save();
+        if (command.RoleId.HasValue)
+        {
+            var role = await roleRepository.GetBy(CompanyId.From(command.CompanyId), RoleId.From(command.RoleId.Value));
+            if (role == null)
+            {
+                return null;
+            }
+            staffer.AssignRole(role);
+        }
 
-        eventsOutbox.Add(UpdateEventFrom(staffer.Id));
+        await stafferRepository.ValidateAndPublish(staffer);
+        await stafferRepository.Save();
 
         return StafferModel.MapFromAggregate(staffer);
     }
-
-    private static StafferUpdated UpdateEventFrom(StafferId stafferId) =>
-        new(stafferId.Value); 
 }

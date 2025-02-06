@@ -7,7 +7,7 @@ using Business.Application.Email.EmailTemplates;
 using Microsoft.Extensions.Configuration;
 using WireOps.Business.Common.Errors;
 
-namespace Business.Application.Auth;
+namespace WireOps.Business.Application.Auth;
 
 public class Auth0APIClient
 {
@@ -91,7 +91,7 @@ public class Auth0APIClient
         return user.UserId;
     }
 
-    public async Task<User> UpdateUser(string userId, string companyName, Guid companyId)
+    public async Task<User> UpdateUser(string userId, string? companyName = null, Guid? companyId = null, IEnumerable<string>? claims = null)
     {
         await CheckAndGenerateManagementApiClient();
 
@@ -107,6 +107,37 @@ public class Auth0APIClient
             throw new DomainError("Cannot find referenced user");
         }
 
+        return await UpdateUser(user, companyName, companyId, claims);
+    }
+
+    public async Task<User> UpdateUser(User user, string? companyName = null, Guid? companyId = null, IEnumerable<string>? claims = null)
+    {
+        await CheckAndGenerateManagementApiClient();
+
+        if (user is null)
+        {
+            throw new DesignError("Cannot update user without a proper user object");
+        }
+
+        if (companyId == null)
+        {
+            if (string.IsNullOrEmpty(user.AppMetadata.company_id))
+            {
+                throw new DomainError("Cannot update user without a proper companyId");
+            }
+            companyId = Guid.Parse(user.AppMetadata.company_id);
+        }
+
+        if (string.IsNullOrEmpty(companyName))
+        {
+            companyName = user.AppMetadata.company_name;
+        }
+
+        if (claims == null)
+        {
+            claims = user.AppMetadata.claims?.ToString().Split(' ');
+        }
+
         var request = new UserUpdateRequest
         {
             AppMetadata = new
@@ -114,11 +145,12 @@ public class Auth0APIClient
                 company_id = companyId,
                 company_name = companyName,
                 given_name = user.AppMetadata.given_name,
-                family_name = user.AppMetadata.family_name
+                family_name = user.AppMetadata.family_name,
+                claims = claims?.Aggregate((a, b) => $"{a} {b}")
             }
         };
 
-        user = await _managementApiClient!.Users.UpdateAsync(userId, request);
+        user = await _managementApiClient!.Users.UpdateAsync(user.UserId, request);
 
         return user;
     }

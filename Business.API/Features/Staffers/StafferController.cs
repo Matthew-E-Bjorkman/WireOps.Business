@@ -80,7 +80,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Update(Guid companyId, Guid id, StafferRequest request)
     {
-        var command = new UpdateStaffer(companyId, id, request.email, request.given_name, request.family_name);
+        var command = new UpdateStaffer(companyId, id, request.email, request.given_name, request.family_name, request.role_id);
         try
         {
             var stafferModel = await UpdateStafferHandler.Handle(command);

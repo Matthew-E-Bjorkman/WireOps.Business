@@ -1,13 +1,10 @@
 ﻿using WireOps.Business.Application.Common;
 using WireOps.Business.Domain.Companies;
-using WireOps.Business.Domain.Companies.Events;
-using WireOps.Business.Domain.Staffers;
 
 namespace WireOps.Business.Application.Companies.Update;
 
 public class UpdateCompanyHandler (
-    Company.Repository repository, 
-    CompanyEventsOutbox eventsOutbox
+    Company.Repository repository
 ) : CommandHandler<UpdateCompany, CompanyModel?>
 {
     public async Task<CompanyModel?> Handle(UpdateCompany command)
@@ -32,14 +29,9 @@ public class UpdateCompanyHandler (
             );
         }
 
-        await repository.ValidateCanSave(company);
+        await repository.ValidateAndPublish(company);
         await repository.Save();
-
-        eventsOutbox.Add(UpdateEventFrom(company.Id));
 
         return CompanyModel.MapFromAggregate(company);
     }
-
-    private static CompanyUpdated UpdateEventFrom(CompanyId companyId) =>
-        new(companyId.Value); 
 }
