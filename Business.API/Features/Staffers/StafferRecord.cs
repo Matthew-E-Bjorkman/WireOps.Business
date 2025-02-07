@@ -11,6 +11,7 @@ namespace WireOps.Business.API.Features.Staffers
         public required string given_name { get; set; }
         public required string family_name { get; set; }
         public required bool is_owner { get; set; }
+        public Guid? role_id { get; set; }
 
         public static StafferRecord FromModel(StafferModel model)
         {
@@ -22,7 +23,8 @@ namespace WireOps.Business.API.Features.Staffers
                 user_id = model.UserId,
                 given_name = model.GivenName,
                 family_name = model.FamilyName,
-                is_owner = model.IsOwner
+                is_owner = model.IsOwner,
+                role_id = model.RoleId
             };
         }
     }

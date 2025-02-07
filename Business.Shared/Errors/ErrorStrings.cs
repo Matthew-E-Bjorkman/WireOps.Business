@@ -37,4 +37,7 @@ public static class Error
 
     public const string StafferUserIdAlreadyAssigned =
         "Cannot link user id to staffer that is already linked";
+
+    public const string InvitedStafferMustHaveRole =
+        "Cannot invite staffer that does not have a role assigned";
 }

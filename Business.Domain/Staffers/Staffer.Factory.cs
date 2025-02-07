@@ -1,8 +1,6 @@
 ﻿using WireOps.Business.Domain.Common.ValueObjects.Types;
 using WireOps.Business.Domain.Companies;
-using WireOps.Business.Domain.Companies.Events;
 using WireOps.Business.Domain.Roles;
-using WireOps.Business.Domain.Staffers.Events;
 
 namespace WireOps.Business.Domain.Staffers;
 

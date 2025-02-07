@@ -1,13 +1,16 @@
 ﻿using WireOps.Business.Application.Auth;
 using WireOps.Business.Application.Common;
+using WireOps.Business.Common.Errors;
 using WireOps.Business.Domain.Companies;
+using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
 
 namespace WireOps.Business.Application.Staffers.Create;
 
 public class InviteStafferHandler (
-    Staffer.Repository repository, 
+    Staffer.Repository stafferRepository, 
     Company.Repository companyRepository,
+    Role.Repository roleRepository,
     Auth0APIClient auth0APIClient
 ) : CommandHandler<InviteStaffer, StafferModel?>
 {
@@ -20,9 +23,21 @@ public class InviteStafferHandler (
             return null;
         }
 
-        var staffer = await repository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
+        var staffer = await stafferRepository.GetBy(CompanyId.From(command.CompanyId), StafferId.From(command.Id));
 
         if (staffer == null)
+        {
+            return null;
+        }
+
+        if (!staffer._data.RoleId.HasValue)
+        {
+            throw new DomainError(Error.InvitedStafferMustHaveRole);
+        }
+
+        var role = await roleRepository.GetBy(CompanyId.From(command.CompanyId), staffer._data.RoleId.Value);
+
+        if (role == null)
         {
             return null;
         }
@@ -36,14 +51,15 @@ public class InviteStafferHandler (
             staffer.CompanyId.Value.ToString(), 
             staffer._data.FamilyName,
             staffer._data.GivenName,
-            company._data.Name
+            company._data.Name,
+            role._data.Permissions.Select(p => $"{p.Action}:{p.Resource}")
         );
         await auth0APIClient.SendInviteEmail(userId);
 
         staffer.LinkUser(userId);
 
-        await repository.ValidateAndPublish(staffer);
-        await repository.Save();
+        await stafferRepository.ValidateAndPublish(staffer);
+        await stafferRepository.Save();
 
         return StafferModel.MapFromAggregate(staffer);
     }

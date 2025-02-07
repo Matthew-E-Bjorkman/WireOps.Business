@@ -29,7 +29,7 @@ public class StafferController(
     [Authorize("write:staffers")]
     public async Task<ActionResult> Create(Guid companyId, StafferRequest request)
     {
-        var command = new CreateStaffer(companyId, request.email, request.given_name, request.family_name);
+        var command = new CreateStaffer(companyId, request.email, request.given_name, request.family_name, request.role_id);
 
         try
         {

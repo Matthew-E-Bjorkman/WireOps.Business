@@ -64,7 +64,7 @@ public class Auth0APIClient
         }
     }
 
-    public async Task<string> CreateUser(string email, string tenantId, string givenName, string familyName, string companyName)
+    public async Task<string> CreateUser(string email, string tenantId, string givenName, string familyName, string companyName, IEnumerable<string> claims)
     {
         await CheckAndGenerateManagementApiClient();
 
@@ -81,7 +81,8 @@ public class Auth0APIClient
                 company_id = tenantId,
                 company_name = companyName,
                 given_name = givenName,
-                family_name = familyName
+                family_name = familyName,
+                claims = claims.Aggregate((a, b) => $"{a} {b}")
             },
             Password = Guid.NewGuid().ToString()
         };

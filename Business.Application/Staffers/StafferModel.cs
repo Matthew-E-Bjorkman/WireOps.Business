@@ -11,6 +11,7 @@ public class StafferModel
     public required string GivenName { get; set; }
     public required string FamilyName { get; set; }
     public required bool IsOwner { get; set; }
+    public Guid? RoleId { get; set; }
 
     public static StafferModel MapFromAggregate(Staffer aggregate)
     {
@@ -22,7 +23,8 @@ public class StafferModel
             UserId = aggregate._data.UserId,
             GivenName = aggregate._data.GivenName,
             FamilyName = aggregate._data.FamilyName,
-            IsOwner = aggregate._data.IsOwner
+            IsOwner = aggregate._data.IsOwner,
+            RoleId = aggregate._data.RoleId.HasValue ? aggregate._data.RoleId.Value.Value : null
         };
     }
 }

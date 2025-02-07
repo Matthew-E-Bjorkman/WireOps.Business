@@ -10,7 +10,7 @@ public class CreateStafferHandler (
 {
     public async Task<StafferModel> Handle(CreateStaffer command)
     {
-        var staffer = factory.New(command.CompanyId, command.Email, command.GivenName, command.FamilyName, false);
+        var staffer = factory.New(command.CompanyId, command.Email, command.GivenName, command.FamilyName, false, command.RoleId);
 
         await repository.ValidateAndPublish(staffer);
         await repository.Save();
