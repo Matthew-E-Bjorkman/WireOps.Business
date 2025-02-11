@@ -1,6 +1,7 @@
 ﻿using WireOps.Business.Application.Auth;
 using WireOps.Business.Application.Common;
 using WireOps.Business.Common.Errors;
+using WireOps.Business.Domain.Common.Definitions;
 using WireOps.Business.Domain.Companies;
 using WireOps.Business.Domain.Roles;
 using WireOps.Business.Domain.Staffers;
@@ -42,6 +43,8 @@ public class InviteStafferHandler (
             return null;
         }
 
+        var claims = role._data.IsAdmin ? new List<string> { "admin" } : role._data.Permissions.Select(p => $"{p.Action}:{p.Resource}");
+
         // If and when Identity becomes an in-house bounded context,
         // this will be handled by publishing a message for consumption
         // by said service to generate and send the invite email.
@@ -52,7 +55,7 @@ public class InviteStafferHandler (
             staffer._data.FamilyName,
             staffer._data.GivenName,
             company._data.Name,
-            role._data.Permissions.Select(p => $"{p.Action}:{p.Resource}")
+            claims
         );
         await auth0APIClient.SendInviteEmail(userId);
 
